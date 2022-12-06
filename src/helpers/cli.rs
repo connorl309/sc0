@@ -1,7 +1,77 @@
-pub fn pollInput() {
-    
+use std::{io::{stdin}, process::exit};
+#[derive(PartialEq)]
+#[derive(Clone)]
+pub enum Inputs {
+    Help,
+    Load(String),
+    Select(String),
+    Memdump(u16, u16),
+    Regdump,
+    Execute,
+    Run(u16),
+    Exit,
+    NULL,
+    Error
 }
 
+/**
+ * Kind of a nasty function, but it's a "parser". It's bound to be ugly.
+ * Reads in user input.
+ */
+pub fn poll_input() -> Inputs {
+    print!("SC0 Sim > ");
+    let mut input = String::new();
+    stdin().read_line(&mut input).expect("Failed to read user input!");
+    input = input.replace(&['\r', '\n'], ""); // remove any delimiters
+    let input_split = input.split(" ").collect::<Vec<_>>(); // split input (just in case.)
+
+    // Need error checking for inputs, just in case
+    return match input_split[0] {
+        "exit" => Inputs::Exit,
+        "?" => Inputs::Help,
+        "load" => {
+            if input_split.len() != 2 {
+                println!("\nPlease specify a program to load in the format 'load <program name here>'.");
+                return Inputs::Error;
+            }
+            Inputs::Load(String::from(input_split[1]))
+        },
+        "select" => {
+            if input_split.len() != 2 {
+                println!("\nPlease select a program in the format 'select <program name here>'.");
+                return Inputs::Error;
+            }
+            Inputs::Select(String::from(input_split[1]))
+        },
+        "memdump" => {
+            if input_split.len() != 3 {
+                println!("\nPlease specify a memory range in the format 'memdump START END'.");
+                return Inputs::Error;
+            }
+            let start = input_split[1].parse::<u16>().unwrap();
+            let end = input_split[2].parse::<u16>().unwrap();
+            Inputs::Memdump(start, end)
+        },
+        "regdump" => Inputs::Regdump,
+        "execute" => Inputs::Execute,
+        "run" => {
+            if input_split.len() != 1 {
+                println!("\nPlease specify the number of instructions to run for in the format 'run NUMBER'.");
+                return Inputs::Error;
+            }
+            let count = input_split[1].parse::<u16>().unwrap();
+            Inputs::Run(count)
+        },
+        _ => Inputs::Error
+    };
+}
+
+/**
+ * CLI commands
+ * 
+ * These will eventually be implemented and 
+ * indirectly access data such as program memory
+ */
 pub fn commands() {
     println!("\nCommand List");
     println!("?                      - displays this list");
@@ -13,3 +83,29 @@ pub fn commands() {
     println!("run <n>                - runs the currently selected program for N instructions");
     println!("\n");
 }
+pub fn quit() {
+    exit(0);
+}
+pub fn load(_pname: String) {
+    println!("<load> command not implemented!");
+}
+pub fn select(_pname: String) {
+    println!("<select> command not implemented!");
+}
+pub fn memdump(_start: u16, _end: u16) {
+    println!("<memdump> command not implemented!");
+}
+pub fn regdump() {
+    println!("<regdump> command not implemented!");
+}
+pub fn execute() {
+    println!("<execute> command not implemented!");
+}
+pub fn run(_count: u16) {
+    println!("<run> command not implemented!");
+}
+pub fn error() {
+    println!("A parse error occurred. I don't know what happened!");
+}
+
+// EOF
