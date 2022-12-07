@@ -32,8 +32,6 @@ In terms of registers, the SC0 has 16 of them. Three are "reserved" by the Simpl
 
 The instruction list and format is as follows. Please note that a lot of instructions can use either immediates (constants) or registers; that is what "reg/imm" denotes. The SC0 ***only*** operates on [2's complement](https://www.cs.cornell.edu/~tomf/notes/cps104/twoscomp.html) integer values, so any operations that *could* result in a floating point result (i.e., division) will truncate to an integer. Any instruction marked with ✞ set condition codes in the PSR.
 
-#
-
 |   Instruction    |          Format           |               Pseudocode                |                      Notes                      |
 | :--------------: | :-----------------------: | :-------------------------------------: | :---------------------------------------------: |
 | ADD<sup>✞</sup>  | add dest, src1, src2/imm  |         dest = src1 + src2/imm          |                       NA                        |
