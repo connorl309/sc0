@@ -1,4 +1,4 @@
-use std::{io::{stdin}, process::exit};
+use std::{io::{self, Write}, process::exit};
 #[derive(PartialEq)]
 #[derive(Clone)]
 pub enum Inputs {
@@ -19,9 +19,10 @@ pub enum Inputs {
  * Reads in user input.
  */
 pub fn poll_input() -> Inputs {
-    print!("SC0 Sim > ");
+    print!("[SC0 Sim] > ");
+    let _ = io::stdout().flush(); // so formatting is nice
     let mut input = String::new();
-    stdin().read_line(&mut input).expect("Failed to read user input!");
+    io::stdin().read_line(&mut input).expect("Failed to read user input!");
     input = input.replace(&['\r', '\n'], ""); // remove any delimiters
     let input_split = input.split(" ").collect::<Vec<_>>(); // split input (just in case.)
 
@@ -75,13 +76,13 @@ pub fn poll_input() -> Inputs {
 pub fn commands() {
     println!("\nCommand List");
     println!("?                      - displays this list");
+    println!("exit                   - quit the SC0");
     println!("load <program>         - load the specified program into memory");
     println!("select <program>       - selects the specified program as target");
     println!("memdump <mem1> <mem2>  - dump memory in the range specified by mem1 and mem2");
     println!("regdump                - dump all register and flag information");
     println!("execute                - execute the currently selected program until halt");
     println!("run <n>                - runs the currently selected program for N instructions");
-    println!("\n");
 }
 pub fn quit() {
     exit(0);

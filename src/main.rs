@@ -1,23 +1,21 @@
 pub mod helpers;
-use std::{borrow::Borrow, clone};
+pub mod cpu;
 
 use crate::helpers::{cli::*};
 fn main() {
     println!("Welcome to the SC0. Please enter a command, or type '?' for a list of commands.");
-    let mut input: Inputs = Inputs::NULL;
-
+    let mut close = false;
     // how do i fix this lol
-    while input != Inputs::Exit {
-        input = poll_input();
-        match input {
+    while !close {
+        match poll_input() {
             Inputs::Help => commands(),
-            Inputs::Load(name) => load(String::from(name)),
-            Inputs::Select(name) => select(String::from(name)),
+            Inputs::Load(name) => load(name.clone()),
+            Inputs::Select(name) => select(name.clone()),
             Inputs::Memdump(start, end) => memdump(start, end),
             Inputs::Regdump => regdump(),
             Inputs::Execute => execute(),
             Inputs::Run(count) => run(count),
-            Inputs::Exit => quit(),
+            Inputs::Exit => close = true,
             Inputs::NULL => error(),
             Inputs::Error => error(),
         }
