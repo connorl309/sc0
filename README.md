@@ -20,6 +20,7 @@ More concretely, the SC0 has 32kB of memory (this might be changed to be user-de
 In terms of registers, the SC0 has 15 of them. Three are "reserved" by the Simple Computer (the **P**rogram **S**tatus **R**egister [PSR], the **P**rogram **C**ounter [PC], and the **S**tack **P**ointer). <ins>For table use, please note that "GPR" stands for **general purpose**</ins>. Register makeup is as follows (sorry for the table length!):
 
 .center[
+
 | Register |    Description / Function     |
 | :------: | :---------------------------: |
 |    R0    |              GPR              |
@@ -38,6 +39,7 @@ In terms of registers, the SC0 has 15 of them. Three are "reserved" by the Simpl
 |   R13    |      GPR/Return register      |
 |    PC    |     Program Counter (R14)     |
 |   PSR    | Program Status Register (R15) |
+
 ]
 
 The instruction list and format is as follows. Please note that a lot of instructions can use either immediates (constants) or registers; that is what "reg/imm" denotes. The SC0 ***only*** operates on [2's complement](https://www.cs.cornell.edu/~tomf/notes/cps104/twoscomp.html) integer values, so any operations that *could* result in a floating point result (i.e., division) will truncate to an integer. Any instruction marked with ✞ set condition codes in the PSR.
