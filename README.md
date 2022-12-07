@@ -55,6 +55,7 @@ The instruction list and format is as follows. Please note that a lot of instruc
 |       STD        |     std dest, src/imm     |       DWORD(mem[dest]) = src/imm        |                       NA                        |
 |       JMP        |      jmp dest/LABEL       |             PC = dest/LABEL             |                       NA                        |
 |       CALL       |      call dest/LABEL      | R13 = PC<sup>inc</sup>, PC = dest/LABEL |                       NA                        |
+|     SYSCALL      |     syscall CALLCODE      | PSR[15] = 1; push PC<sup>inc</sup> to stack| Executes a syscall. Please continue reading the readme for list of available syscalls. |
 |     BR(nzp)      |       BR(nzp) LABEL       |               PC = LABEL                |    Branch only if any condition code matches    |
 | CMP<sup>✞</sup>  |    cmp src1, src2/imm     |            (src1 - src2/imm)            | Sets condition codes based on result of compare |
 |       PUSH       |       push src1/imm       |        mem[sp] = src1/imm; sp++         |                       NA                        |
