@@ -35,7 +35,7 @@ The instruction list and format is as follows. Please note that a lot of instruc
 # TODO: DEFINE THE BIT SPACING FOR EVERY INSTRUCTION SO I CAN FIGURE OUT BIT WIDTHS FOR EVERYTHING
 
 |   Instruction    |          Format           |               Pseudocode                |                      Notes                      |
-| :--------------: | :-----------------------: | :-------------------------------------: | :---------------------------------------------: |
+| :--------------: | :------------------------------: | :-----------------------------: | :---------------------------------: |
 | ADD<sup>✞</sup>  | add dest, src1, src2/imm  |         dest = src1 + src2/imm          |                       NA                        |
 | SUB<sup>✞</sup>  | sub dest, src1, src2/imm  |         dest = src1 - src2/imm          |                       NA                        |
 | MUL<sup>✞</sup>  | mul dest, src1, src2/imm  |         dest = src1 * src2/imm          |                       NA                        |
