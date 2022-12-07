@@ -45,9 +45,11 @@ The instruction list and format is as follows. Please note that a lot of instruc
 | LSHF<sup>✞</sup> | lshf dest, src1, src2/imm |         dest = src1 << src2/imm         |                       NA                        |
 | RSHF<sup>✞</sup> | rshf dest, src1, src2/imm |         dest = src1 >> src2/imm         |                       NA                        |
 |       LEA        |      lea dest, LABEL      |         dest = address of label         |                       NA                        |
+| LDI<sup>✞</sup>  |      ldi dest, src        |       dest = DWORD(mem[mem[src]])       |                       NA                        |
 | LDB<sup>✞</sup>  | ldb dest, src1, src2/imm  |    dest = BYTE(mem[src1 + src2/imm])    |                       NA                        |
 | LDW<sup>✞</sup>  | ldw dest, src1, src2/imm  |    dest = WORD(mem[src1 + src2/imm])    |                       NA                        |
 | LDD<sup>✞</sup>  | ldq dest, src1, src2/imm  |   dest = DWORD(mem[src1 + src2/imm])    |                       NA                        |
+|       STI        |       sti dest, src       |      DWORD(mem[mem[dest]]) = src        |                       NA                        |
 |       STB        |     stb dest, src/imm     |        BYTE(mem[dest]) = src/imm        |                       NA                        |
 |       STW        |     stw dest, src/imm     |        WORD(mem[dest]) = src/imm        |                       NA                        |
 |       STD        |     std dest, src/imm     |       DWORD(mem[dest]) = src/imm        |                       NA                        |
