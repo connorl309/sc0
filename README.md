@@ -17,7 +17,7 @@ The SC0 is an expansion of the LC3-B by extending to use 32 bits of space for ea
 
 More concretely, the SC0 has 32kB of memory (this might be changed to be user-defined!), with 4 bytes of space available at each memory address. Via simple multiplication, that's 128 whole kilobytes of stuff to work with! That's a lotta bytes! Realistically no program will ever use this much space. Hopefully. Who knows, maybe I'll finally lose my marbles and write a C to SC0 compiler. But that's a topic for another day.
 
-In terms of registers, the SC0 has 15 of them. Three are "reserved" by the Simple Computer (the **P**rogram **S**tatus **R**egister [PSR], the **P**rogram **C**ounter [PC], and the **S**tack **P**ointer). <ins>For table use, please note that "GPR" stands for **general purpose**</ins>. Register makeup is as follows (sorry for the table length!):
+In terms of registers, the SC0 has 16 of them. Three are "reserved" by the Simple Computer (the **P**rogram **S**tatus **R**egister [PSR], the **P**rogram **C**ounter [PC], and the **S**tack **P**ointer). <ins>For table use, please note that "GPR" stands for **general purpose**</ins>. Register makeup is as follows (sorry for the table length!):
 
 | Register | Description / Function | Register |    Description / Function     |
 | :------: | :--------------------: | :------: | :---------------------------: |
