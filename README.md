@@ -19,7 +19,7 @@ More concretely, the SC0 has 32kB of memory (this might be changed to be user-de
 
 In terms of registers, the SC0 has 15 of them. Three are "reserved" by the Simple Computer (the **P**rogram **S**tatus **R**egister [PSR], the **P**rogram **C**ounter [PC], and the **S**tack **P**ointer). <ins>For table use, please note that "GPR" stands for **general purpose**</ins>. Register makeup is as follows (sorry for the table length!):
 
-<p align="center">
+<p style="text-align: center">
 
 | Register | Description / Function | Register |    Description / Function     |
 | :------: | :--------------------: | :------: | :---------------------------: |
