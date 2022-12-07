@@ -19,20 +19,7 @@ More concretely, the SC0 has 32kB of memory (this might be changed to be user-de
 
 In terms of registers, the SC0 has 15 of them. Three are "reserved" by the Simple Computer (the **P**rogram **S**tatus **R**egister [PSR], the **P**rogram **C**ounter [PC], and the **S**tack **P**ointer). <ins>For table use, please note that "GPR" stands for **general purpose**</ins>. Register makeup is as follows (sorry for the table length!):
 
-<p style="text-align: center">
-
-| Register | Description / Function | Register |    Description / Function     |
-| :------: | :--------------------: | :------: | :---------------------------: |
-|    R0    |          GPR           |    R1    |              GPR              |
-|    R2    |          GPR           |    R3    |              GPR              |
-|    R4    |          GPR           |    R5    |              GPR              |
-|    R6    |          GPR           |    R7    |              GPR              |
-|    R8    |          GPR           |    R9    |              GPR              |
-|   R10    |          GPR           |   R11    |              GPR              |
-|   R12    |     Stack pointer      |   R13    |      GPR/Return register      |
-|    PC    | Program Counter (R14)  |   PSR    | Program Status Register (R15) |
-
-</p>
+<table style="text-align: center;"><tr><td>Register</td><td>Description / Function</td><td>Register</td><td>Description / Function</td></tr><tr><td>R0</td><td>GPR</td><td>R1</td><td>GPR</td></tr><tr><td>R2</td><td>GPR</td><td>R3</td><td>GPR</td></tr><tr><td>R4</td><td>GPR</td><td>R5</td><td>GPR</td></tr><tr><td>R6</td><td>GPR</td><td>R7</td><td>GPR</td></tr><tr><td>R8</td><td>GPR</td><td>R9</td><td>GPR</td></tr><tr><td>R10</td><td>GPR</td><td>R11</td><td>GPR</td></tr><tr><td>R12</td><td>Stack pointer</td><td>R13</td><td>GPR/Return register</td></tr><tr><td>PC</td><td>Program Counter (R14)</td><td>PSR</td><td>Program Status Register (R15)</td></tr></table>
 
 The instruction list and format is as follows. Please note that a lot of instructions can use either immediates (constants) or registers; that is what "reg/imm" denotes. The SC0 ***only*** operates on [2's complement](https://www.cs.cornell.edu/~tomf/notes/cps104/twoscomp.html) integer values, so any operations that *could* result in a floating point result (i.e., division) will truncate to an integer. Any instruction marked with ✞ set condition codes in the PSR.
 
