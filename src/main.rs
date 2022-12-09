@@ -2,6 +2,8 @@ pub mod helpers;
 pub mod cpu;
 
 use crate::helpers::{cli::*};
+//use crate::cpu::*;
+
 fn main() {
     println!("Welcome to the SC0. Please enter a command, or type '?' for a list of commands.");
     let mut close = false;

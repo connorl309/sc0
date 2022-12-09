@@ -1,4 +1,7 @@
 use super::isa::Instruction;
+use std::fs::File;
+use std::io::Write;
+#[allow(non_camel_case_types)]
 
 /**
  * This file contains all definitions and funcs needed for
@@ -18,6 +21,11 @@ struct ALU {
     output: i32
 }
 impl ALU {
+    fn flush(&mut self) {
+        self.input1 = 0;
+        self.input1 = 0;
+        self.output = 0;
+    }
     fn add(&mut self) -> i32 {
         self.output = self.input1 + self.input2;
         return self.output;
@@ -60,21 +68,19 @@ impl ALU {
     }
 }
 
+// Initialization of hardware object
+pub fn initialize(limit: u32) -> SC0_Hardware {
+    return SC0_Hardware { register_file: [0; 16], memory: vec![0; limit as usize], alu: ALU{input1: 0, input2: 0, output: 0}, mem_limit: limit }
+}
+
 pub struct SC0_Hardware {
     register_file: [i32; 16], // note that [13-15] are explicitly reserved
     memory: Vec<u32>,
     alu: ALU,
     mem_limit: u32
 }
-
+// related funcs
 impl SC0_Hardware {
-    // Initialization
-    pub fn initialize(&mut self, limit: u32) {
-        self.mem_limit = limit;
-        self.memory = vec![0; self.mem_limit as usize];
-        self.set_alu(0, 0);
-        self.register_file = [0; 16];
-    }
     // Register manipulation
     pub fn get_reg(&self, idx: u8) -> i32 {
         return self.register_file[idx as usize];
@@ -144,4 +150,13 @@ impl SC0_Hardware {
             _ => panic!("Error: Invalid ALU operation {:?}!", instr)
         }
     }
+}
+
+// Debug functions
+pub fn __debug_memdump(hw: &SC0_Hardware) {
+    let mut f = File::create("memdump.out").expect("Could not create memory dump debug file!");
+    for (addr, val) in hw.memory.iter().enumerate() {
+        writeln!(&mut f, "Address {:#06X} = {:#06X}", addr, val).unwrap();
+    }
+    println!("\n================Debug memory dump finished================\n");
 }
