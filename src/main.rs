@@ -1,11 +1,18 @@
 pub mod helpers;
 pub mod cpu;
 
+use std::process::exit;
+
+use crate::cpu::hardware::{initialize, __debug_memdump};
 use crate::helpers::{cli::*};
-//use crate::cpu::*;
+use crate::cpu::*;
 
 fn main() {
     println!("Welcome to the SC0. Please enter a command, or type '?' for a list of commands.");
+    /*
+    let mut sc0 = initialize(0xFFFF + 1);
+    __debug_memdump(&sc0);
+    */
     let mut close = false;
     // how do i fix this lol
     while !close {
