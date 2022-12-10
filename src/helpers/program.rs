@@ -24,5 +24,6 @@ pub fn load_prog(iname: String) -> Program {
 }
 
 fn verify_prog(list: &Vec<ExecStatement>) -> bool {
+    // git please work
     return true;
 }
