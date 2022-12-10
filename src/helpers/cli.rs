@@ -1,4 +1,6 @@
 use std::{io::{self, Write}, process::exit};
+use super::program::{Program, load_prog};
+
 #[derive(PartialEq)]
 #[derive(Clone)]
 pub enum Inputs {
@@ -87,8 +89,8 @@ pub fn commands() {
 pub fn quit() {
     exit(0);
 }
-pub fn load(_pname: String) {
-    println!("<load> command not implemented!");
+pub fn load(_pname: String) -> Program {
+    return load_prog(_pname);
 }
 pub fn select(_pname: String) {
     println!("<select> command not implemented!");
