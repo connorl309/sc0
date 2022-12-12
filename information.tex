@@ -1,3 +1,250 @@
-this is text
+\documentclass{article}
 
-this is more text
+% TOC
+% summary
+% description of the sc0
+% register map
+% instructions
+% usage
+%
+\usepackage{xcolor}
+\usepackage{fancyvrb}
+\newcommand*\scc[1]{{#1}\textbf{$^\times$}}
+\usepackage{geometry}
+\geometry{legalpaper, portrait, margin=1in} % formatting for page margins
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=red,
+    urlcolor=blue,
+}
+
+\begin{document}
+% document info
+\title{\Huge\textbf{Simple Computer 0 Documentation}}
+\author{\href{https://github.com/connorl309/}{\textbf{\textcolor{blue}by Connor L.}}}
+\date{}
+\maketitle
+
+% begin TOC
+\begin{tableofcontents}
+\pagebreak
+% summary of project
+\section{\Huge Summary}
+\begin{Large}
+The SC0 is a hobby project of mine inspired by \href{https://users.ece.utexas.edu/~patt/}{\textbf{Dr. Yale Patt's}}
+LC-3(b) teaching computers. In creating the SC0, I am hoping to gain a deeper understanding
+of how computer systems are created, and the architecture behind them. I am studying computer
+architecture at UT Austin, and am excited to learn more about this field as I progress through
+my degree.
+
+The project is written in Rust. I chose this for two reasons: 
+\begin{itemize}
+    \item Rust has a unique and powerful data flow design
+    \item Memory management is completely different (and, in my opinion, stronger) than C++
+\end{itemize}
+\end{Large}
+
+% description of the sc0 itself
+\section{\Huge Description of SC0}
+\begin{Large}
+The SC0 has several advantages (or, disadvantages, depending on how you look at it) from
+the LC-3(b) systems:
+\begin{itemize}
+    \item 32-bit addressability | more instructions, wider range of values for constants
+    \item Multiple types of memory access instructions | direct and indirect
+    \item More (useful) instructions | syscalls, an innate stack, logic and math
+\end{itemize}
+Currently, the SC0 has a fixed address space of 32kB (realistically, no program will ever fill
+up this much space, unless I write a C to SC0 compiler). Registers also can store up to 32 bits
+of information.
+
+\textit{Note:} A list of system calls and example program formatting can be found later in this
+document.
+\end{Large}
+% register map
+\section{\Huge Register Map}
+% register map table
+\begin{center}
+\begin{tabular}{ |c|c|c| }
+\hline
+\textbf{Register} & \textbf{Type} & \textbf{Notes} \\
+\hline
+\textbf{R0} & GPR & General purpose \\
+\hline
+\textbf{R1} & GPR & General purpose \\
+\hline
+\textbf{R2} & GPR & General purpose \\
+\hline
+\textbf{R3} & GPR & General purpose \\
+\hline
+\textbf{R4} & GPR & General purpose \\
+\hline
+\textbf{R5} & GPR & General purpose \\
+\hline
+\textbf{R6} & GPR & General purpose \\
+\hline
+\textbf{R7} & GPR & General purpose \\
+\hline
+\textbf{R8} & GPR & General purpose \\
+\hline
+\textbf{R9} & GPR & General purpose \\
+\hline
+\textbf{R10} & GPR & General purpose \\
+\hline
+\textbf{R11} & GPR & General purpose \\
+\hline
+\textbf{R12} & GPR/Return Register & Calls store the return PC in this register \\
+\hline
+\textbf{R13} & SP & Stack pointer \\
+\hline
+\textbf{R14} & PC & Current instruction address \\
+\hline
+\textbf{R15} & PSR & Condition Codes and Privelege \\
+\hline
+\end{tabular}
+\end{center}
+\large The special registers \textit{can} be accessed directly, but it is \textbf{highly} advised
+to not do that. Condition codes are in the format of N, Z, P, representing negative, zero, and 
+positive respectively. Certain instructions set the condition codes (CC) depending on the 
+resultant value. Any functions that are user-defined can have any style of parameter passing,
+either from the stack or through registers directly.
+% instructions
+\section{\Huge Instruction Listing and Formatting}
+\label{sec:instructionList}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Instruction} & \textbf{Format} & \textbf{Pseudocode} \\
+\hline
+\textbf{\scc{ADD}} & add dest, src1, src2/imm & dest = src1 + src2 \\
+\hline
+\textbf{\scc{SUB}} & sub dest, src1, src2/imm & dest = src1 - src2 \\
+\hline
+\textbf{\scc{MUL}} & mul dest, src1, src2/imm & dest = src1 * src2 \\
+\hline
+\textbf{\scc{DIV}} & div dest, src1, src2/imm & dest = src1 / src2, no floats \\
+\hline
+\textbf{\scc{MOV}} & mov dest, src/imm & dest = src \\
+\hline
+\textbf{\scc{AND}} & and dest, src1, src2/imm & dest = src1 \& src2 \\
+\hline
+\textbf{\scc{OR}} & or dest, src1, src2/imm & dest = src1 $|$ src2 \\
+\hline
+\textbf{\scc{NOT}} & not dest, src & dest = \~{}src \\
+\hline
+\textbf{\scc{XOR}} & xor dest, src1, src2/imm & dest = src1 \^{} src2 \\
+\hline 
+\textbf{\scc{LSHF}} & lshf dest, src1, src2/imm & dest = src1 $<$$<$ src2 \\
+\hline
+\textbf{\scc{RSHF}} & rshf dest, src1, src2/imm & dest = src1 $>$$>$ src2 \\
+\hline
+\textbf{LEA} & lea dest, LABEL & dest = address of label \\
+\hline
+\textbf{\scc{LDI}} & ldi dest, src & dest = DWORD(mem[mem[src]]) \\
+\hline
+\textbf{\scc{LDB}} & ldb dest, src1, src2/imm & dest = BYTE(mem[src1 + src2]) \\
+\hline
+\textbf{\scc{LDW}} & ldw dest, src1, src2/imm & dest = WORD(mem[src1 + src2]) \\
+\hline
+\textbf{\scc{LDD}} & ldd dest, src1, src2/imm & dest = DWORD(mem[src1 + src2]) \\
+\hline
+\textbf{STI} & sti dest, src & DWORD(mem[mem[dest]]) = src \\
+\hline
+\textbf{STB} & stb dest, src1, src2/imm & BYTE(mem[dest + src2]) = src1 \\
+\hline
+\textbf{STW} & stw dest, src1, src2/imm & WORD(mem[dest + src2]) = src1 \\
+\hline
+\textbf{STD} & std dest, src1, src2/imm & DWORD(mem[dest + src2]) = src1 \\
+\hline
+\textbf{JMP} & jmp reg/LABEL & PC = reg/LABEL address \\
+\hline
+\textbf{CALL} & call reg/LABEL & R12 = Incremented PC; PC = reg/LABEL address \\
+\hline
+\textbf{SYSCALL} & syscall CODE & An internal CALL execution \\
+\hline
+\textbf{BR(nzp)} & BR(nzp) LABEL & Conditional (or unconditional) branch \\
+\hline
+\textbf{\scc{CMP}} & cmp src1, src2/imm & CC = (src1 - src2) \\
+\hline
+\textbf{PUSH} & push src/imm & mem[sp++] = src \\
+\hline
+\textbf{\scc{POP}} & pop dest & dest = mem[$-$$-$sp] \\
+\hline
+\end{tabular}
+\end{center}
+\textit{\Large Please note:} instructions marked with $\times$ set condition codes on execution.
+% usage
+\section{\Huge Usage of SC0}
+\begin{Large}
+User programs are entered into an SC0 program file that ends in .asm, 
+and uses instructions shown above. The typical formatting for an SC0 program
+is as follows:
+\begin{center}
+\textcolor{blue}{\textbf{LABEL:}} \textbf{INSTRUCTION OPERANDS} \textcolor{gray}{ \# comments}
+\end{center}
+There are four pseudo-ops in the SC0:
+\begin{itemize}
+    \item \textbf{.ORIG XXXX} | define starting address for program at XXXX
+    \item \textbf{.END} | signal end of program for parser
+    \item \textbf{.FILL XXXX} | fill that memory location with value XXXX
+    \item \textbf{.STRING XXXX} | insert ascii characters in-order, starting at the .STRING memory address
+\end{itemize}
+The FILL and STRING pseudo-ops can be prefixed with a label, allowing for ease-of-access
+in the user program.
+
+Once a user program has been finalized, it may be parsed and assembled by the SC0 program by 
+launching the simulator and loading the file into memory.
+\end{Large}
+% examples and syscalls
+\section{\Huge Syscalls and Examples}
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\textbf{HALT} & Special call: shuts down SC0. \\
+\hline
+\textbf{PRINT} & Prints the string found at \textbf{R0} until null terminator. \\
+\hline
+\textbf{DISPLAY} & Displays data found in R0 on-screen. No automatic newline. \\
+\hline
+\textbf{DELAY} & Waits \textbf{R0} cycles, then resumes program execution. \\
+\hline
+\textbf{INPUT} & Reads one character from input into \textbf{R0}. \\
+\hline
+\end{tabular}
+\end{center}
+The above system calls are what are implemented in the SC0. Currently, syscalls are executed
+on an abstraction layer. In reality, the PC should jump to the syscall value in memory, and read 
+the stored address there like a lookup table, then go execute the syscall. The SC0 simply
+reads the syscall type and executes it on the Rust layer, not on the assembly layer.
+
+An example program would look as follows:
+\begin{center}
+    \begin{BVerbatim}
+        .ORIG x100 # start program at 0x100
+        LEA R0, LOC1
+        LEA R1, LOC2
+        # load numbers from memory
+        LDI R0, R0  
+        LDI R1, R1
+        ADD R2, R0, R1
+        LEA R3, STORE
+        STI R3, R2 # store sum of num1 and num2 into mem[0x300]
+        SYSCALL HALT
+    STORE .FILL 0x300 # store location
+    LOC2  .FILL 0x204 # location of number 2
+    LOC1  .FILL 0x200 # location of number 1
+        .END
+    \end{BVerbatim}
+\end{center}
+As the comments suggest, this program adds the two 4 byte numbers found at \textbf{MEM[0x200]}
+and \textbf{MEM[0x204]} and stores the result in \textbf{R2}. Then, the value of \textbf{R2}
+is stored into \textbf{MEM[0x300]}. Note the combination of \textcolor{blue}{\textbf{LEA}} and
+\textcolor{blue}{\textbf{LDI/STI}}. This is a common combination to use the indirect load and
+store instructions. The \textbf{LEA} loads the address of the variables into the specified registers,
+and then the \textbf{LDI/STI} perform the chained memory operation as seen in the
+\textbf{\hyperref[sec:instructionList]{Instruction Listing}}.
+\end{tableofcontents}
+
+\end{document}

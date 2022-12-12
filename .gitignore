@@ -11,6 +11,8 @@ Cargo.lock
 
 # Custom debug files for project
 *.out
+# from latex
+*.gz 
 
 # Added by cargo
 
