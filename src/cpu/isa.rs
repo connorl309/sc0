@@ -1,3 +1,7 @@
+use std::process::exit;
+
+use crate::helpers::program::Program;
+
 /**
  * This file contains definitions for the SC0
  * ISA (Instruction Set Architecture)
@@ -5,7 +9,20 @@
  * It is a somewhat loose definition and will likely be changing as
  * this project evolves.
  */
-#[derive(Debug)]
+
+// LUT for instruction arg validity
+const INSTR_LUT: &'static[usize] = &[
+    3, /* add */ 3, /* sub */ 3, /* mul */
+    3, /* div */ 2, /* mov */ 3, /* and */
+    3, /* or */ 2, /* not */ 3, /* xor */
+    3, 3, /* shifts */ 2, /* lea */
+    2, /* ldi */ 3, 3, 3, /* ldb thru ldd */
+    2, /* sti */ 3, 3, 3, /* stb thru std */
+    1, /* jmp */ 1, /* call */ 1, /* syscall */
+    1, /* brnzp */ 2, /* cmp */ 1, 1 /* push and pop */
+];
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Instruction {
     Add = 1,
     Sub = 2,
@@ -34,7 +51,12 @@ pub enum Instruction {
     Cmp = 24,
     Push = 25,
     Pop = 26,
-    Error = -1,
+    // pseudo-ops
+    ORIG = 27,
+    FILL = 28,
+    STRING = 29,
+    END = 30,
+    Error = 31,
 }
 pub struct ExecStatement {
     pub opc: Instruction,
@@ -71,6 +93,27 @@ pub fn get_instr(op: &str) -> Instruction {
         "cmp" => Instruction::Cmp,
         "push" => Instruction::Push,
         "pop" => Instruction::Pop,
+        ".orig" => Instruction::ORIG,
+        ".end" => Instruction::END,
+        ".string" => Instruction::STRING,
+        ".fill" => Instruction::FILL,
         _ => Instruction::Error
     }
+}
+
+// validate # of arguments for every type of instruction
+// i could maybe do this a better way but nah
+pub fn check_args(p: &Program) -> bool {
+    for exec in &p.instructions {
+        if exec.opc == Instruction::Error {
+            return false;
+        }
+        else {
+            if INSTR_LUT[exec.opc as usize] != exec.args.len() {
+                println!("Invalid argument lengths detected for {:?}", exec.opc);
+                return false;
+            }
+        }
+    }
+    return true;
 }

@@ -4,12 +4,13 @@ use crate::cpu::hardware::{initialize, __debug_memdump};
 use crate::helpers::program::Program;
 use crate::helpers::{cli::*};
 
+#[allow(non_snake_case)]
 fn main() {
     println!("Welcome to the SC0. Please enter a command, or type '?' for a list of commands.");
     
     let sc0 = initialize(0xFFFF + 1);
     let mut userProg: Program;
-    __debug_memdump(&sc0);
+    //__debug_memdump(&sc0);
     let mut close = false;
     // how do i fix this lol
     while !close {

@@ -2,14 +2,14 @@ use std::{io::{self, BufRead, BufReader}, fs::File};
 use crate::cpu::isa::{ExecStatement, get_instr};
 
 pub struct Program {
-    name: String,
-    instructions: Vec<ExecStatement>,
+    pub name: String,
+    pub instructions: Vec<ExecStatement>,
     start_pc: u32
 }
 
 pub fn load_prog(iname: String) -> Program {
     let mut i_list: Vec<ExecStatement> = Vec::new();
-    let mut pc: u32 = 0;
+    let pc: u32 = 0; // handled later
     let name = iname.clone();
 
     let infile = File::open(iname).expect("Could not open user program file!");
@@ -23,7 +23,7 @@ pub fn load_prog(iname: String) -> Program {
     return Program { name: name, instructions: i_list, start_pc: pc }
 }
 
-fn verify_prog(list: &Vec<ExecStatement>) -> bool {
+fn verify_prog(prog: &mut Program) -> bool {
     // git please work
     return true;
 }
