@@ -1,4 +1,7 @@
-use super::isa::Instruction;
+use crate::helpers::program::Program;
+
+use super::isa::{Instruction, check_args};
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 #[allow(non_camel_case_types)]
@@ -70,17 +73,44 @@ impl ALU {
 
 // Initialization of hardware object
 pub fn initialize(limit: u32) -> SC0_Hardware {
-    return SC0_Hardware { register_file: [0; 16], memory: vec![0; limit as usize], alu: ALU{input1: 0, input2: 0, output: 0}, mem_limit: limit }
+    return SC0_Hardware { register_file: [0; 16], memory: vec![0; limit as usize], 
+        alu: ALU{input1: 0, input2: 0, output: 0}, mem_limit: limit,
+        user_progs: Vec::new() 
+    }
 }
 
 pub struct SC0_Hardware {
-    register_file: [i32; 16], // note that [13-15] are explicitly reserved
+    register_file: [i32; 16], // note that [13-15] are somewhat reserved
     memory: Vec<u32>,
     alu: ALU,
-    mem_limit: u32
+    mem_limit: u32,
+    user_progs: Vec<Program>,
 }
 // related funcs
 impl SC0_Hardware {
+    // higher level stuff, program related
+    pub fn add_prog(&mut self, p: Program) {
+        // p passed in from load_program() in main.rs
+        // this returns a program obj
+        self.user_progs.push(p);
+        // want to verify for every program added
+        if check_args(&mut self.user_progs.last_mut().unwrap()) {
+            println!("Successfully loaded user program '{}'.", self.user_progs.last().unwrap().name.clone());
+        } else {
+            println!("User program '{}' failed to load -- instruction check failed!", self.user_progs.last().unwrap().name.clone());
+            // remove failed program
+            self.user_progs.remove(self.user_progs.len() - 1);
+        }
+    }
+    // return program reference for given name
+    pub fn get_prog(&self, n: String) -> Option<&Program> {
+        for p in &self.user_progs {
+            if p.name == n {
+                return Some(p);
+            }
+        }
+        return None;
+    }
     // Register manipulation
     pub fn get_reg(&self, idx: u8) -> i32 {
         return self.register_file[idx as usize];

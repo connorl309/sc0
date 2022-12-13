@@ -1,5 +1,5 @@
 use std::{io::{self, Write}, process::exit};
-use super::program::{Program, load_prog};
+use super::program::{Program, load_prog, run_program};
 
 #[derive(PartialEq)]
 #[derive(Clone)]
@@ -11,6 +11,7 @@ pub enum Inputs {
     Regdump,
     Execute,
     Run(u16),
+    Debug(String),
     Exit,
     NULL,
     Error
@@ -58,17 +59,23 @@ pub fn poll_input() -> Inputs {
         "regdump" => Inputs::Regdump,
         "execute" => Inputs::Execute,
         "run" => {
-            if input_split.len() != 1 {
+            if input_split.len() != 2 {
                 println!("\nPlease specify the number of instructions to run for in the format 'run NUMBER'.");
                 return Inputs::Error;
             }
             let count = input_split[1].parse::<u16>().unwrap();
             Inputs::Run(count)
         },
+        "debug" => {
+            if input_split.len() != 2 {
+                println!("Please enter only one/a user program name!");
+                return Inputs::Error;
+            }
+            Inputs::Debug(String::from(input_split[1]))
+        },
         _ => Inputs::Error
     };
 }
-
 /**
  * CLI commands
  * 
@@ -104,7 +111,7 @@ pub fn regdump() {
 pub fn execute() {
     println!("<execute> command not implemented!");
 }
-pub fn run(_count: u16) {
+pub fn run(p: &mut Program, _count: u16) {
     println!("<run> command not implemented!");
 }
 pub fn error() {
