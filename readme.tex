@@ -179,8 +179,10 @@ either from the stack or through registers directly.
 \section{\Huge Usage of SC0}
 \begin{Large}
 User programs are entered into an SC0 program file that ends in .asm, 
-and uses instructions shown above. The typical formatting for an SC0 program
-is as follows:
+and uses instructions shown above. The parser is case-insensitive,
+so you cannot have duplicate labels! Any constants must be formatted
+as either hex (0xNUMBERHERE), or decimal (\#NUMBER HERE).
+The typical formatting for an SC0 program is as follows:
 \begin{center}
 \textcolor{blue}{\textbf{LABEL:}} \textbf{INSTRUCTION OPERANDS} \textcolor{gray}{ \# comments}
 \end{center}

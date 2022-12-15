@@ -1,10 +1,15 @@
-use std::{io::{self, BufRead, BufReader}, fs::File, borrow::Borrow, process::exit};
+use std::{io::{BufRead, BufReader}, fs::File, process::exit};
 use crate::cpu::isa::{ExecStatement, get_instr, Instruction};
 
+pub struct Symbol {
+    name: String,
+    addr: u32
+}
 pub struct Program {
     pub name: String,
     pub instructions: Vec<ExecStatement>,
-    pub start_pc: u32
+    pub start_pc: u32,
+    pub sym_table: Vec<Symbol>,
 }
 
 pub fn load_prog(iname: String) -> Program {
@@ -42,7 +47,7 @@ pub fn load_prog(iname: String) -> Program {
         let exec = ExecStatement { opc: _opc, args: splite};
         i_list.push(exec);
     }
-    return Program { name: name, instructions: i_list, start_pc: pc }
+    return Program { name: name, instructions: i_list, start_pc: pc, sym_table: Vec::new() }
 }
 
 // debug info
