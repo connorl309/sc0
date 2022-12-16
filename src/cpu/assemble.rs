@@ -1,11 +1,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(unused)]
+
+/**
+ * We do all the actual instruction checking and "assembly" here.
+ * Big ass file. Not really clean. Oh well...
+ * 
+ * Can probably clean this up *a lot*. If you have any suggestions, please
+ * recommend them to me as a Github issue or PR.
+ */
+
 use crate::helpers::program::Program;
 use crate::cpu::hardware::{HALT,PRINT,DISPLAY,DELAY,INPUT};
 use crate::cpu::isa::{Instruction};
-use std::fs::{File, remove_file};
-use std::io::{Write, BufWriter};
 use std::path::Path;
 
 use super::hardware::Sc0Hardware;
@@ -15,11 +22,6 @@ const IMM_ERROR: u32 = 0xAFFFFFFF;
 const REG_ERROR: u8 = 255;
 
 // Syscall constants (see hardware.rs)
-
-/**
- * We do all the actual instruction checking and "assembly" here.
- * Big ass file. Not really clean. Oh well...
- */
 pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
     // all program assembly stored into memory
     for (pos, statement) in p.instructions.iter().enumerate() {
@@ -35,7 +37,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: ADD destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -47,7 +49,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on ADD! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -57,7 +59,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: SUB destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -69,7 +71,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on SUB! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -79,7 +81,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: MUL destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -91,7 +93,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on MUL! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -101,7 +103,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: DIV destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -113,7 +115,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on DIV! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -122,7 +124,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
                 if dest.1 != ResType::reg {
                     println!("Error: MOV destination invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 if src.1 == ResType::reg {
@@ -133,7 +135,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000;
                 } else {
                     println!("Argument error on MOV! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -143,7 +145,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: AND destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -155,7 +157,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on AND! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -165,7 +167,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: OR destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -177,7 +179,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on OR! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -187,7 +189,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: XOR destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -199,7 +201,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on XOR! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -208,7 +210,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
                 if dest.1 != ResType::reg || src.1 != ResType::reg {
                     println!("Error: NOT destination/src invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 12;
@@ -220,7 +222,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: LSHF destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -232,7 +234,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on LSHF! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -242,7 +244,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: RSHF destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -254,7 +256,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on RSHF! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -263,7 +265,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
                 if dest.1 != ResType::reg || src.1 != ResType::label {
                     println!("Error: LEA destination/src invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -274,7 +276,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
                 if dest.1 != ResType::reg || src.1 != ResType::reg {
                     println!("Error: LDI destination/src invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -286,7 +288,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: LDB destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -298,7 +300,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on LDB! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -308,7 +310,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: LDW destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -320,7 +322,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on LDW! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -330,7 +332,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: LDD destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -342,7 +344,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on LDD! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -351,7 +353,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
                 if dest.1 != ResType::reg || src.1 != ResType::reg {
                     println!("Error: STI destination/src invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -363,7 +365,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: STB destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -375,7 +377,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on STB! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -385,7 +387,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: STW destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -397,7 +399,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on STW! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -407,7 +409,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
                 if dest.1 != ResType::reg || src1.1 != ResType::reg {
                     println!("Error: STD destination/src1 invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += dest.0 << 20;
@@ -419,7 +421,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     outputHexLine |= 0x1000000; // set bit 24
                 } else {
                     println!("Argument error on STD! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
             }
@@ -427,7 +429,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let goto = try_reg_or_imm_or_label(&p, &statement.args[0]);
                 if goto.1 == ResType::constant {
                     println!("Error: JMP destination invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 if goto.1 == ResType::reg {
@@ -441,7 +443,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let goto = try_reg_or_imm_or_label(&p, &statement.args[0]);
                 if goto.1 == ResType::constant {
                     println!("Error: CALL destination invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 if goto.1 == ResType::reg {
@@ -461,7 +463,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     "input" => outputHexLine += (INPUT as u32) & 0xFFFF,
                     _ => {
                         println!("Invalid syscall! Aborting assembly.");
-                        remove_file(&p.obj_name);
+                        
                         return false;
                     }
                 }
@@ -472,7 +474,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let label = try_reg_or_imm_or_label(&p, &statement.args[1]);
                 if label.1 != ResType::label {
                     println!("BRANCH argument is not a label! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += ((label.0 as i32) & 0xFFFF) as u32;
@@ -492,7 +494,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let src2 = try_reg_or_imm_or_label(&p, &statement.args[1]);
                 if src1.1 != ResType::reg || src2.1 == ResType::label {
                     println!("CMP arguments are invalid! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += src1.0 << 16;
@@ -507,7 +509,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let toPush = try_reg_or_imm_or_label(&p, &statement.args[0]);
                 if toPush.1 == ResType::label {
                     println!("PUSH argument cannot be a label! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 if toPush.1 == ResType::reg {
@@ -522,7 +524,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 let intoReg = try_reg_or_imm_or_label(&p, &statement.args[0]);
                 if intoReg.1 != ResType::reg {
                     println!("POP argument MUST be a register! Aborting assembly.");
-                    remove_file(&p.obj_name);
+                    
                     return false;
                 }
                 outputHexLine += intoReg.0;

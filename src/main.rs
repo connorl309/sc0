@@ -18,18 +18,26 @@ fn main() {
             Inputs::Load(name) => {
                 sc0.add_prog(load_prog(name));
             },
-            Inputs::Select(name) => select(name.clone()),
+            Inputs::Select(name) => select(&mut sc0, name.clone()),
             Inputs::Memdump(start, end) => memdump(&sc0, start, end),
-            Inputs::Regdump => regdump(),
-            Inputs::Execute => execute(),
+            Inputs::Regdump => regdump(&sc0),
+            Inputs::Execute => {
+                if sc0.selected.len() == 0 {
+                    println!("Please select a loaded program first!");
+                    continue;
+                }
+                execute(&sc0);
+            }
             Inputs::Run(_count) => {
+                run(&sc0, sc0.selected.clone(), _count);
             },
             Inputs::Debug => {
+                println!("Executing debug total-memory dump...");
                 __debug_memdump_all(&sc0);
             }
             Inputs::Exit => close = true,
-            Inputs::NULL => error(),
-            Inputs::Error => error(),
+            Inputs::NULL => println!("Invalid command!"),
+            Inputs::Error => println!("Invalid command!")
         }
     }
 }

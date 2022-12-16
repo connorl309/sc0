@@ -1,5 +1,10 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
+/**
+ * This file contains all definitions and declarations for
+ * a program object - filename, list of instructions, the starting PC value,
+ * the corresponding symbol table, etc.
+ */
 use std::{io::{BufRead, BufReader}, fs::File, process::exit};
 use crate::cpu::isa::{ExecStatement, get_instr, Instruction};
 
@@ -7,9 +12,9 @@ pub struct Symbol {
     name: String,
     pub addr: u32
 }
+
 pub struct Program {
     pub name: String,
-    pub obj_name: String,
     pub instructions: Vec<ExecStatement>,
     pub start_pc: u32,
     pub sym_table: Vec<Symbol>,
@@ -52,6 +57,10 @@ pub fn load_prog(iname: String) -> Program {
         let mut l = line.unwrap().trim().to_string();
         if let Some((m, _)) = l.split_once(";") {
             l = String::from(m);
+        }
+        // rust pls (part two)
+        if l.len() == 0 {
+            continue; // skip empty lines
         }
         labelPC += 1;
 
@@ -116,7 +125,7 @@ pub fn load_prog(iname: String) -> Program {
             args: full_split
         });
     }
-    return Program { name: name, obj_name: String::new(), instructions: i_list, start_pc: pc, sym_table: syms, scratchwork: pc }
+    return Program { name: name, instructions: i_list, start_pc: pc, sym_table: syms, scratchwork: pc }
 }
 
 // debug info

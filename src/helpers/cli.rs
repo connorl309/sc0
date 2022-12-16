@@ -1,3 +1,8 @@
+/**
+ * This file contains all functions and relevant info for the CLI
+ * of the SC0 simulator.
+ * 
+ */
 use std::{io::{self, Write}, process::exit};
 use crate::cpu::hardware::Sc0Hardware;
 
@@ -33,8 +38,8 @@ pub fn poll_input() -> Inputs {
 
     // Need error checking for inputs, just in case
     return match input_split[0] {
-        "exit" => Inputs::Exit,
-        "?" => Inputs::Help,
+        "exit" | "e" | "quit" | "q" => Inputs::Exit,
+        "?" | "help" | "commands" | "h" => Inputs::Help,
         "load" => {
             if input_split.len() != 2 {
                 println!("\nPlease specify a program to load in the format 'load <program name here>'.");
@@ -96,29 +101,55 @@ pub fn quit() {
 pub fn load(_pname: String) -> Program {
     return load_prog(_pname);
 }
-pub fn select(_pname: String) {
-    println!("<select> command not implemented!");
+pub fn select(hw: &mut Sc0Hardware, _pname: String) {
+    let copy = _pname.clone();
+    match hw.get_prog(_pname) {
+        Some(resulting_prog) => {
+            hw.selected = resulting_prog.name.clone();
+            println!("Selected program '{}'!", copy);
+        }
+        None => {
+            println!("Program '{}' does not exist / hasn't been loaded into the SC0! Cannot select.", copy);
+            hw.selected = "".to_string();
+        }
+    }
 }
 pub fn memdump(hw: &Sc0Hardware, _start: u32, _end: u32) {
     let mut start = _start;
     let mut f = std::fs::File::create("memdump.out").expect("Could not create memory dump debug file!");
     while start <= _end {
-        writeln!(f, "ADDR [0x{:04X}] - 0x{:08X}", start, hw.get_mem_dw(start));
+        writeln!(f, "ADDR [0x{:04X}] - 0x{:08X}", start, hw.get_mem_dw(start)).unwrap();
         start += 1;
     }
     println!("\n================Finished dump================\n");
 }
-pub fn regdump() {
-    println!("<regdump> command not implemented!");
+pub fn regdump(hw: &Sc0Hardware) {
+    println!("===========Register Dump===========");
+    for (reg, val) in hw.register_file.iter().enumerate() {
+        // special formatting checks
+        if reg == 13 {
+            println!("R13/Stack Pointer:\t0x{:08X}", val);
+        }
+        if reg == 14 {
+            println!("R14/Program Counter:\t0x{:06X}", val);
+        }
+        if reg == 15 { // check if 32 is right or not
+            println!("R15/Program Status Register:\t0b{:#032b}", val);
+        } else {
+            println!("R{}:\t0x{:08X}", reg as u8, val);
+        }
+    }
 }
-pub fn execute() {
-    println!("<execute> command not implemented!");
+pub fn execute(hw: &Sc0Hardware) {
+    let prog_ref = hw.get_prog(hw.selected.clone()).unwrap();
+    run_hidden(&prog_ref, 0xFFFF);
 }
-pub fn run(_p: &mut Program, _count: u16) {
-    println!("<run> command not implemented!");
+pub fn run(hw: &Sc0Hardware, _p: String, _count: u16) {
+    let prog_ref = hw.get_prog(hw.selected.clone()).unwrap();
+    run_hidden(&prog_ref, _count);
 }
-pub fn error() {
-    println!("A parse error occurred. I don't know what happened!");
+// this is the actual run function
+fn run_hidden(prog: &Program, limit: u16) {
+    println!("RUN is not yet implemented");
 }
-
 // EOF

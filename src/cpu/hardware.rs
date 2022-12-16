@@ -1,11 +1,6 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(unused)]
-use crate::helpers::program::Program;
-use super::assemble::assemble;
-use super::isa::{Instruction, check_args};
-use std::fs::File;
-use std::io::Write;
 
 /**
  * This file contains all definitions and funcs needed for
@@ -14,6 +9,13 @@ use std::io::Write;
  * Register file, a (basic) datapath (which might not even be implemented initially...),
  * memory, and "I/O" (software stdin/stdio)
  */
+
+use crate::helpers::program::Program;
+use super::assemble::assemble;
+use super::isa::{Instruction, check_args};
+use std::fs::File;
+use std::io::Write;
+use std::ptr::null_mut;
 
 // List of syscall definitions
 pub const HALT: i32 = 0xAAAA;
@@ -83,16 +85,17 @@ impl ALU {
 pub fn initialize(limit: u32) -> Sc0Hardware {
     return Sc0Hardware { register_file: [0; 16], memory: vec![0; limit as usize], 
         alu: ALU{input1: 0, input2: 0, output: 0}, mem_limit: limit,
-        user_progs: Vec::new() 
+        user_progs: Vec::new(), selected: String::new(), // this gotta be checked !!
     }
 }
 
 pub struct Sc0Hardware {
-    register_file: [i32; 16], // note that [13-15] are somewhat reserved
+    pub register_file: [i32; 16], // note that [13-15] are somewhat reserved
     memory: Vec<u32>,
     alu: ALU,
     mem_limit: u32,
     user_progs: Vec<Program>,
+    pub selected: String,
 }
 // related funcs
 impl Sc0Hardware {
