@@ -1,5 +1,5 @@
 use std::{io::{self, Write}, process::exit};
-use super::program::{Program, load_prog, run_program};
+use super::program::{Program, load_prog};
 
 #[derive(PartialEq)]
 #[derive(Clone)]
@@ -111,7 +111,7 @@ pub fn regdump() {
 pub fn execute() {
     println!("<execute> command not implemented!");
 }
-pub fn run(p: &mut Program, _count: u16) {
+pub fn run(_p: &mut Program, _count: u16) {
     println!("<run> command not implemented!");
 }
 pub fn error() {

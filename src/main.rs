@@ -1,6 +1,5 @@
 pub mod helpers;
 pub mod cpu;
-use std::iter::Empty;
 
 use crate::cpu::hardware::*;
 use crate::helpers::program::*;
@@ -24,7 +23,7 @@ fn main() {
             Inputs::Memdump(start, end) => memdump(start, end),
             Inputs::Regdump => regdump(),
             Inputs::Execute => execute(),
-            Inputs::Run(count) => {
+            Inputs::Run(_count) => {
             },
             Inputs::Debug(name) => {
                 if let Some(p) = sc0.get_prog(name) {

@@ -1,171 +1,640 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused)]
 use crate::helpers::program::Program;
-use crate::cpu::isa::{ExecStatement, Instruction};
-use std::fs::File;
-use std::io::Write;
+use crate::cpu::hardware::{HALT,PRINT,DISPLAY,DELAY,INPUT};
+use crate::cpu::isa::{Instruction};
+use std::fs::{File, remove_file};
+use std::io::{Write, BufWriter};
+use std::path::Path;
 
 // Some useful return errors
 const IMM_ERROR: u32 = 0xAFFFFFFF;
 const REG_ERROR: u8 = 255;
+
+// Syscall constants (see hardware.rs)
 
 /**
  * We do all the actual instruction checking and "assembly" here.
  * Big ass file. Not really clean. Oh well...
  */
 pub fn assemble(p: &mut Program) -> bool {
-    let mut objectFile = File::open(String::from(p.name.clone() + ".object")).unwrap();
-    for (pos, statement) in p.instructions.iter_mut().enumerate() {
+    // all program .obj files are stored in /objects/<progname>.obj
+    p.obj_name = String::from("./objects/".to_owned() + &p.name.as_str() + ".object");
+    println!("{}", &p.obj_name);
+    std::fs::create_dir_all("./objects/");
+    let objectFile = File::create(&p.obj_name).unwrap();
+    let mut writer = BufWriter::new(objectFile);
+    for (pos, statement) in p.instructions.iter().enumerate() {
+        let mut outputHexLine: u32 = 0;
         // in this function we are GUARANTEED that every instruction has the correct num of args.
         // see instruction list if need (the .pdf)
+        let opc_val = (statement.opc as u32) << 27;
+        outputHexLine += opc_val;
+        p.start_pc += 1;
         match statement.opc {
-            Instruction::Add => {
-                
+            Instruction::Add => { // bit 24 = 1 if immediate, 0 if not
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: ADD destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on ADD! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Sub => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: SUB destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on SUB! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Mul => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: MUL destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on MUL! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Div => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: DIV destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on DIV! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Mov => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                if dest.1 != ResType::reg {
+                    println!("Error: MOV destination invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                if src.1 == ResType::reg {
+                    outputHexLine += src.0 << 16;
+                }
+                else if src.1 == ResType::constant {
+                    outputHexLine += src.0 & 0xFFFF;
+                    outputHexLine |= 0x1000000;
+                } else {
+                    println!("Argument error on MOV! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::And => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: AND destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on AND! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Or => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: OR destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on OR! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Xor => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: XOR destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on XOR! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Not => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                if dest.1 != ResType::reg || src.1 != ResType::reg {
+                    println!("Error: NOT destination/src invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 12;
+                outputHexLine += src.0;
             }
             Instruction::Lshf => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: LSHF destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on LSHF! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Rshf => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: RSHF destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on RSHF! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Lea => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                if dest.1 != ResType::reg || src.1 != ResType::label {
+                    println!("Error: LEA destination/src invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += ((src.0 as i32) & 0xFFFF) as u32;
             }
             Instruction::Ldi => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                if dest.1 != ResType::reg || src.1 != ResType::reg {
+                    println!("Error: LDI destination/src invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src.0;
             }
             Instruction::Ldb => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: LDB destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on LDB! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Ldw => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: LDW destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on LDW! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Ldd => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: LDD destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on LDD! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Sti => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                if dest.1 != ResType::reg || src.1 != ResType::reg {
+                    println!("Error: STI destination/src invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src.0;
             }
             Instruction::Stb => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: STB destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on STB! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Stw => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: STW destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on STW! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Std => {
-                
+                let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[2]);
+                if dest.1 != ResType::reg || src1.1 != ResType::reg {
+                    println!("Error: STD destination/src1 invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += dest.0 << 20;
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0;
+                } else if src2.1 == ResType::constant {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x1000000; // set bit 24
+                } else {
+                    println!("Argument error on STD! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
             }
             Instruction::Jmp => {
-                
+                let goto = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                if goto.1 == ResType::constant {
+                    println!("Error: JMP destination invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                if goto.1 == ResType::reg {
+                    outputHexLine += goto.0;
+                    outputHexLine |= 0xF0000; // flag for register specified jump
+                } else {
+                    outputHexLine += ((goto.0 as i32) & 0xFFFF) as u32;
+                }
             }
             Instruction::Call => {
-                
+                let goto = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                if goto.1 == ResType::constant {
+                    println!("Error: CALL destination invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                if goto.1 == ResType::reg {
+                    outputHexLine += goto.0;
+                    outputHexLine |= 0xF0000; // flag for register specified jump
+                } else {
+                    outputHexLine += ((goto.0 as i32) & 0xFFFF) as u32;
+                }
             }
             Instruction::Syscall => {
-                
+                // see hardware.rs for these constants
+                match statement.args[0].as_str() {
+                    "halt" => outputHexLine += (HALT as u32) & 0xFFFF,
+                    "print" => outputHexLine += (PRINT as u32) & 0xFFFF,
+                    "display" => outputHexLine += (DISPLAY as u32) & 0xFFFF,
+                    "delay" => outputHexLine += (DELAY as u32) & 0xFFFF,
+                    "input" => outputHexLine += (INPUT as u32) & 0xFFFF,
+                    _ => {
+                        println!("Invalid syscall! Aborting assembly.");
+                        remove_file(&p.obj_name);
+                        return false;
+                    }
+                }
             }
             Instruction::Branch => {
-                
+                // args[0] of branch is condition codes
+                let cc = &statement.args[0];
+                let label = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                if label.1 != ResType::label {
+                    println!("BRANCH argument is not a label! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += ((label.0 as i32) & 0xFFFF) as u32;
+                // set CC bits (18:16)
+                if cc.contains('n') {
+                    outputHexLine |= 0x40000;
+                }
+                if cc.contains('z') {
+                    outputHexLine |= 0x20000;
+                }
+                if cc.contains('p') {
+                    outputHexLine |= 0x10000;
+                }
             }
             Instruction::Cmp => {
-                
+                let src1 = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                let src2 = try_reg_or_imm_or_label(&p, &statement.args[1]);
+                if src1.1 != ResType::reg || src2.1 == ResType::label {
+                    println!("CMP arguments are invalid! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += src1.0 << 16;
+                if src2.1 == ResType::reg {
+                    outputHexLine += src2.0 << 12;
+                } else {
+                    outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x100000; // bit 20 flag for imm
+                }
             }
             Instruction::Push => {
-                
+                let toPush = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                if toPush.1 == ResType::label {
+                    println!("PUSH argument cannot be a label! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                if toPush.1 == ResType::reg {
+                    outputHexLine += toPush.0 << 16;
+                }
+                else {
+                    outputHexLine += ((toPush.0 as i32) & 0xFFFF) as u32;
+                    outputHexLine |= 0x100000; // bit 20 flag for imm
+                }
             }
             Instruction::Pop => {
-                
+                let intoReg = try_reg_or_imm_or_label(&p, &statement.args[0]);
+                if intoReg.1 != ResType::reg {
+                    println!("POP argument MUST be a register! Aborting assembly.");
+                    remove_file(&p.obj_name);
+                    return false;
+                }
+                outputHexLine += intoReg.0;
             }
             Instruction::ORIG => {
-                
+                let (val, result) = try_reg_or_imm_or_label(&p, &statement.args[0]); // we only want
+                if (result == ResType::bad) { return false; }
+                outputHexLine = val;
             }
             Instruction::FILL => {
-                
+                let mut fillVal: u32 = 0;
+                let arg = &statement.args[0];
+                if arg.starts_with("0x") {
+                    let temp = arg.trim_start_matches("0x");
+                    fillVal = u32::from_str_radix(temp, 16).unwrap();
+                } else if arg.starts_with("#") {
+                    let temp = arg.trim_start_matches("#");
+                    fillVal = u32::from_str_radix(temp, 10).unwrap();
+                }
+                outputHexLine = fillVal;
             }
             Instruction::STRING => {
-                
+                // this is going to be a bit tricky
+                // we have to separate the whole string into chunks
+                // of 4 bytes each
+                let mut count = 0;
+                let mut collect: u32 = 0;
+                for c in statement.args[0].as_bytes() {
+                    count += 1;
+                    collect <<= 8;
+                    collect += *c as u32;
+                    if count%4 == 0 {
+                        writeln!(writer, "0x{:08X}", collect);
+                        collect = 0;
+                    }
+                }
+                // write whatever is remaining
+                collect <<= (count%4) * 8;
+                writeln!(writer, "0x{:08X}", collect);
+                continue;
             }
             Instruction::END => {
-                
+                break;
             }
             Instruction::Error => {
-                
+                println!("\nHow did an invalid instruction slip through the checks... check project code!!!\n");
+                panic!();
             }
         }
+        // for now... assume the write is successful...
+        writeln!(writer, "0x{:08X}", outputHexLine).ok();
     }
     return true;
 }
 
-// Extract out the register number from a register string
-// An error occurs on result = 255
-fn reg_num(arg: &String) -> u8 {
-    if !(arg.starts_with('r')) {
-        println!("Invalid operand {}, expected a register! Cannot assemble.", &arg);
-        return 255;
-    } else {
-        return match arg.as_str() {
-            "r0" => 0,
-            "r1" => 1,
-            "r2" => 2,
-            "r3" => 3,
-            "r4" => 4,
-            "r5" => 5,
-            "r6" => 6,
-            "r7" => 7,
-            "r8" => 8,
-            "r9" => 9,
-            "r10" => 10,
-            "r11" => 11,
-            "r12" => 12,
-            "r13" | "sp" => 13,
-            "r14" | "pc" => 14,
-            "r15" | "psr" => 15,
-            _ => REG_ERROR
-        }
-    }
+// Extract either register, or immediate, value from an arg string
+// Kind of nasty, but oh well.
+#[derive(PartialEq)]
+enum ResType {
+    reg,
+    constant,
+    label,
+    bad
 }
-
-// Extract out the numerical value of a string
-// Error check -> i need to define the encodings.....
-// I'm *pretty* sure constants will at most take up 16 bits. But I don't know.
-// Note: need to cast as u32 so that formatting is normal
-// When program is EXECUTED, is when we need to cast as i32.
-fn imm_val(arg: &String) -> u32 {
-    if arg.starts_with("0x") {
+fn try_reg_or_imm_or_label(p: &&mut Program, arg: &String) -> (u32, ResType) {
+    // label
+    if p.labelExists(arg.to_string()) {
+        return (p.labelOffset(arg.to_string(), p.start_pc), ResType::label);
+    }
+    // registers
+    else if arg.starts_with('r') {
+        return match arg.as_str() {
+            "r0" => (0, ResType::reg),
+            "r1" => (1, ResType::reg),
+            "r2" => (2, ResType::reg),
+            "r3" => (3, ResType::reg),
+            "r4" => (4, ResType::reg),
+            "r5" => (5, ResType::reg),
+            "r6" => (6, ResType::reg),
+            "r7" => (7, ResType::reg),
+            "r8" => (8, ResType::reg),
+            "r9" => (9, ResType::reg),
+            "r10" => (10, ResType::reg),
+            "r11" => (11, ResType::reg),
+            "r12" => (12, ResType::reg),
+            "r13" | "sp" => (13, ResType::reg),
+            "r14" | "pc" => (14, ResType::reg),
+            "r15" | "psr" => (15, ResType::reg),
+            _ => {
+                println!("Invalid register '{}' specified. Please fix.", arg);
+                return (IMM_ERROR, ResType::bad);
+            }
+        }
+    } 
+    // numbers
+    else if arg.starts_with("0x") {
         let temp = arg.trim_start_matches("0x");
         match u32::from_str_radix(temp, 16) {
             Ok(_num) => {
                 if _num > 65535 {
                     println!("Hex argument {} takes up more than 16 bits! Stopping assembly.", arg);
-                    return IMM_ERROR;
+                    return (IMM_ERROR, ResType::bad);;
                 }
-                return _num;
+                return (_num, ResType::constant);
             },
             Err(_err) => {
                 println!("Could not parse hex argument {}! Stopping assembly.", arg);
-                return IMM_ERROR;
+                return (IMM_ERROR, ResType::bad);
             }
         }
     } else if arg.starts_with("#") {
@@ -174,17 +643,17 @@ fn imm_val(arg: &String) -> u32 {
             Ok(_num) => {
                 if _num > 65535 {
                     println!("Decimal argument {} takes up more than 16 bits! Stopping assembly.", arg);
-                    return IMM_ERROR;
+                    return (IMM_ERROR, ResType::bad);
                 }
-                return _num;
+                return (_num, ResType::constant);
             },
             Err(_) => {
                 println!("Could not parse decimal argument {}! Stopping assembly.", arg);
-                return IMM_ERROR;
+                return (IMM_ERROR, ResType::bad);
             }
         }
     } else {
-        println!("Invalid immediate '{}'! Cannot parse, stopping assembly.", arg);
-        return IMM_ERROR;
+        println!("Invalid argument '{}'! Cannot parse, stopping assembly.", arg);
+        return (IMM_ERROR, ResType::bad);
     }
 }

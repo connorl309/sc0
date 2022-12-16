@@ -1,5 +1,3 @@
-use std::process::exit;
-
 use crate::helpers::program::Program;
 
 /**
@@ -41,7 +39,7 @@ const INSTR_LUT: &'static[usize] = &[
     1, // pseudo ops
     1,
     1,
-    0,
+    1,
     0
 ];
 
@@ -134,9 +132,14 @@ pub fn check_args(p: &mut Program) -> bool {
         }
         else {
             if exec.opc == Instruction::ORIG {
-                p.start_pc = exec.args[0].parse::<u32>().unwrap();
-                continue;
-            } 
+                if exec.args[0].starts_with("0x") {
+                    let temp = exec.args[0].trim_start_matches("0x");
+                    p.start_pc = u32::from_str_radix(temp, 16).unwrap();
+                } else if exec.args[0].starts_with("#") {
+                    let temp = exec.args[0].trim_start_matches("#");
+                    p.start_pc = u32::from_str_radix(temp, 10).unwrap();
+                }
+            }
             
             if INSTR_LUT[exec.opc as usize] != exec.args.len() {
                 println!("Invalid argument lengths detected for {:?}", exec.opc);
