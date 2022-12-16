@@ -8,6 +8,8 @@ use std::fs::{File, remove_file};
 use std::io::{Write, BufWriter};
 use std::path::Path;
 
+use super::hardware::Sc0Hardware;
+
 // Some useful return errors
 const IMM_ERROR: u32 = 0xAFFFFFFF;
 const REG_ERROR: u8 = 255;
@@ -18,20 +20,14 @@ const REG_ERROR: u8 = 255;
  * We do all the actual instruction checking and "assembly" here.
  * Big ass file. Not really clean. Oh well...
  */
-pub fn assemble(p: &mut Program) -> bool {
-    // all program .obj files are stored in /objects/<progname>.obj
-    p.obj_name = String::from("./objects/".to_owned() + &p.name.as_str() + ".object");
-    println!("{}", &p.obj_name);
-    std::fs::create_dir_all("./objects/");
-    let objectFile = File::create(&p.obj_name).unwrap();
-    let mut writer = BufWriter::new(objectFile);
+pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
+    // all program assembly stored into memory
     for (pos, statement) in p.instructions.iter().enumerate() {
         let mut outputHexLine: u32 = 0;
         // in this function we are GUARANTEED that every instruction has the correct num of args.
         // see instruction list if need (the .pdf)
         let opc_val = (statement.opc as u32) << 27;
         outputHexLine += opc_val;
-        p.start_pc += 1;
         match statement.opc {
             Instruction::Add => { // bit 24 = 1 if immediate, 0 if not
                 let dest = try_reg_or_imm_or_label(&p, &statement.args[0]);
@@ -559,13 +555,15 @@ pub fn assemble(p: &mut Program) -> bool {
                     collect <<= 8;
                     collect += *c as u32;
                     if count%4 == 0 {
-                        writeln!(writer, "0x{:08X}", collect);
+                        outputter.push(collect);
                         collect = 0;
                     }
                 }
                 // write whatever is remaining
+                // this is scuffed and honestly idk if it works
+                // BUT. maybe.
                 collect <<= (count%4) * 8;
-                writeln!(writer, "0x{:08X}", collect);
+                outputter.push(collect);
                 continue;
             }
             Instruction::END => {
@@ -577,9 +575,18 @@ pub fn assemble(p: &mut Program) -> bool {
             }
         }
         // for now... assume the write is successful...
-        writeln!(writer, "0x{:08X}", outputHexLine).ok();
+        outputter.push(outputHexLine);
+        p.scratchwork += 1;
     }
     return true;
+}
+
+// Adjusts label addresses once we actually calculate the .ORIG value
+// unsure if i need this...?
+pub fn adjust_labels(p: &mut Program, adjustment: u32) {
+    for label in p.sym_table.iter_mut() {
+        label.addr += adjustment;
+    }
 }
 
 // Extract either register, or immediate, value from an arg string
@@ -594,7 +601,7 @@ enum ResType {
 fn try_reg_or_imm_or_label(p: &&mut Program, arg: &String) -> (u32, ResType) {
     // label
     if p.labelExists(arg.to_string()) {
-        return (p.labelOffset(arg.to_string(), p.start_pc), ResType::label);
+        return (p.labelOffset(arg.to_string(), p.scratchwork) as u32, ResType::label);
     }
     // registers
     else if arg.starts_with('r') {

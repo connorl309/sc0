@@ -184,7 +184,7 @@ so you cannot have duplicate labels! Any constants must be formatted
 as either hex (0xNUMBERHERE), or decimal (\#NUMBER HERE).
 The typical formatting for an SC0 program is as follows:
 \begin{center}
-\textcolor{blue}{\textbf{LABEL:}} \textbf{INSTRUCTION OPERANDS} \textcolor{gray}{ \# comments}
+\textcolor{blue}{\textbf{LABEL:}} \textbf{INSTRUCTION OPERANDS} \textcolor{gray}{; comments}
 \end{center}
 There are four pseudo-ops in the SC0:
 \begin{itemize}
@@ -224,19 +224,19 @@ reads the syscall type and executes it on the Rust layer, not on the assembly la
 An example program would look as follows:
 \begin{center}
     \begin{BVerbatim}
-        .ORIG x100 # start program at 0x100
+        .ORIG x100 ; start program at memory address 0x100
         LEA R0, LOC1
         LEA R1, LOC2
-        # load numbers from memory
+        ; load numbers from memory
         LDI R0, R0  
         LDI R1, R1
         ADD R2, R0, R1
         LEA R3, STORE
-        STI R3, R2 # store sum of num1 and num2 into mem[0x300]
+        STI R3, R2 ; store sum of num1 and num2 into mem[0x300]
         SYSCALL HALT
-    STORE .FILL 0x300 # store location
-    LOC2  .FILL 0x204 # location of number 2
-    LOC1  .FILL 0x200 # location of number 1
+    STORE .FILL 0x300 ; store location
+    LOC2  .FILL 0x204 ; location of number 2
+    LOC1  .FILL 0x200 ; location of number 1
         .END
     \end{BVerbatim}
 \end{center}

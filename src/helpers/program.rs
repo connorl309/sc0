@@ -1,11 +1,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-use std::{io::{BufRead, BufReader}, fs::File, process::exit, ascii::AsciiExt};
+use std::{io::{BufRead, BufReader}, fs::File, process::exit};
 use crate::cpu::isa::{ExecStatement, get_instr, Instruction};
 
 pub struct Symbol {
     name: String,
-    addr: u32
+    pub addr: u32
 }
 pub struct Program {
     pub name: String,
@@ -13,15 +13,16 @@ pub struct Program {
     pub instructions: Vec<ExecStatement>,
     pub start_pc: u32,
     pub sym_table: Vec<Symbol>,
+    pub scratchwork: u32,
 }
 impl Program {
-    pub fn labelOffset(&self, labName: String, pc: u32) -> u32 {
+    pub fn labelOffset(&self, labName: String, pc: u32) -> i32 {
         for i in &self.sym_table {
             if i.name == labName {
-                return i.addr - pc;
+                return (i.addr as i32) - (pc as i32);
             }
         }
-        return u32::MAX;
+        return i32::MAX;
     }
     pub fn labelExists(&self, labName: String) -> bool {
         for elem in &self.sym_table {
@@ -35,7 +36,9 @@ impl Program {
 
 pub fn load_prog(iname: String) -> Program {
     let mut i_list: Vec<ExecStatement> = Vec::new();
-    let pc: u32 = 0; // handled later
+    let mut pc: u32 = 0; // handled later
+    let mut syms: Vec<Symbol> = Vec::new();
+    let mut labelPC: u32 = 0;
     let name = iname.clone();
 
     let infile = File::open(iname).expect("Could not open user program file!");
@@ -46,47 +49,74 @@ pub fn load_prog(iname: String) -> Program {
         }
         
         // remove any comments
-        let mut l = line.unwrap();
-        if let Some((m, _)) = l.split_once("#") {
+        let mut l = line.unwrap().trim().to_string();
+        if let Some((m, _)) = l.split_once(";") {
             l = String::from(m);
         }
-        // special check for .string
-        
-        if l.to_ascii_lowercase().contains(".string") {
-            let tempOp = Instruction::STRING;
+        labelPC += 1;
+
+        // first, formatting
+        let fit_line = l.to_ascii_lowercase();
+        let mut full_split: Vec<String> = fit_line.split(&[',', ' ', '\t',]).filter(|&s| !s.is_empty()).map(|s| s.to_string()).collect();
+        // check if .orig
+        if fit_line.contains(".orig") {
+            full_split.remove(0); // remove the .ORIG part
+            if full_split[0].starts_with("0x") {
+                let temp = full_split[0].trim_start_matches("0x");
+                pc = u32::from_str_radix(temp, 16).unwrap();
+                labelPC = pc;
+            } else if full_split[0].starts_with("#") {
+                let temp = full_split[0].trim_start_matches("#");
+                pc = u32::from_str_radix(temp, 10).unwrap();
+                labelPC = pc;
+            }
+            i_list.push(ExecStatement {
+                opc: Instruction::ORIG,
+                args: full_split,
+            });
+            continue;
+        }
+        // check if label(s)
+        if full_split[0].contains(':') {
+            full_split[0].pop(); // remove the :
+            syms.push( Symbol {
+               addr: labelPC, // unlike LC3, PC increments at the END of execution
+               name: full_split[0].clone() 
+            });
+            full_split.remove(0); // remove label
+        }
+        // check .string
+        if full_split[0].contains(".string") {
             let mut oneArg: Vec<String> = Vec::new();
-            oneArg.push(l[8..].to_string());
-            println!("{}", oneArg[0]);
-            i_list.push(ExecStatement {opc: tempOp, args: oneArg});
+            oneArg.push(fit_line[8..].to_string());
+            i_list.push(ExecStatement {
+                 opc: Instruction::STRING, args: oneArg
+            });
             continue;
         }
-        let mut splite: Vec<String> = l
-            .to_ascii_lowercase()
-            .split(&[',', ' ', '\t'])
-            .filter(|&s| !s.is_empty())
-            .map(|s| s.to_string()).collect();
-        if splite.len() == 0 {
-            continue;
-        }
-        let _opc = get_instr(splite[0].as_str());
-        // todo: handle this error better, probably don't just quit.
-        if _opc == Instruction::Error {
-            println!("Error: invalid instruction {:?}. Exiting SC0!", splite[0]);
+
+        let opcode = get_instr(&full_split[0]);
+        // check for errors (somehow)
+        if opcode == Instruction::Error {
+            println!("Invalid opcode '{}'! Exiting the SC0.", full_split[0]);
+            // actual "error" handling: how to do....
             exit(-1);
         }
-        // special check for branches
-        if _opc == Instruction::Branch {
-            // we can pop the first two chars from the line string
-            // and the remainder is the CC
-            let mut temp = splite[0].chars();
-            temp.next(); temp.next(); // remove "br"
-            splite.insert(1, String::from(temp.as_str()));
+        // branch check, and get CC in right spot
+        if opcode == Instruction::Branch {
+            let mut temp = full_split[0].chars();
+            temp.next(); temp.next();
+            full_split.insert(1, temp.as_str().to_string());
         }
-        splite.remove(0); // get rid of instruction
-        let exec = ExecStatement { opc: _opc, args: splite};
-        i_list.push(exec);
+        // otherwise we are *probably* fine... do instructions as normal
+        full_split.remove(0); // remove instruction (already stored in 'opcode')
+        //println!("program.rs dbg: {:?}", full_split);
+        i_list.push(ExecStatement {
+            opc: opcode,
+            args: full_split
+        });
     }
-    return Program { name: name, obj_name: String::new(), instructions: i_list, start_pc: pc, sym_table: Vec::new() }
+    return Program { name: name, obj_name: String::new(), instructions: i_list, start_pc: pc, sym_table: syms, scratchwork: pc }
 }
 
 // debug info
@@ -104,6 +134,7 @@ pub fn __debug_progdump(p: &Program) {
 
 // TODO
 // Open "./objects/<progname>.object" and run
+// man. pain.
 pub fn run_program(p: &mut Program, _count: u16) {
     // do things...
 }

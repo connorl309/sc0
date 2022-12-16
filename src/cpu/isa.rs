@@ -10,37 +10,38 @@ use crate::helpers::program::Program;
 
 // LUT for instruction arg validity
 const INSTR_LUT: &'static[usize] = &[
-    3,
-    3,
-    3,
-    3,
-    2,
-    3,
-    3,
-    2,
-    3,
-    3,
-    3,
-    2,
-    2,
-    3,
-    3,
-    3,
-    2,
-    3,
-    3,
-    3,
-    2,
-    2,
-    1,
-    1,
-    2,
+    3, // add
+    3, // sub
+    3, // mul
+    3, // div
+    2, // mov
+    3, // and
+    3, // or
+    3, // xor
+    2, // not
+    3, // lshf
+    3, // rhsf
+    2, // lea
+    2, // ldi
+    3, // ldb
+    3, // ldw
+    3, // ldd
+    2, // sti
+    3, // stb
+    3, // stw
+    3, // std
+    1, // jmp
+    1, // call
+    1, // syscall
+    2, // branch
+    2, // cmp
+    1, // push
     1, // pop
-    1, // pseudo ops
-    1,
-    1,
-    1,
-    0
+    1, // orig
+    1, // fill
+    1, // string
+    0, // end
+    0 // error
 ];
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -126,7 +127,7 @@ pub fn get_instr(op: &str) -> Instruction {
 // validate # of arguments for every type of instruction
 // i could maybe do this a better way but nah
 pub fn check_args(p: &mut Program) -> bool {
-    for exec in &mut p.instructions {
+    for exec in &p.instructions {
         if exec.opc == Instruction::Error {
             return false;
         }

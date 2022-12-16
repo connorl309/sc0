@@ -1,4 +1,6 @@
 use std::{io::{self, Write}, process::exit};
+use crate::cpu::hardware::Sc0Hardware;
+
 use super::program::{Program, load_prog};
 
 #[derive(PartialEq)]
@@ -7,11 +9,11 @@ pub enum Inputs {
     Help,
     Load(String),
     Select(String),
-    Memdump(u16, u16),
+    Memdump(u32, u32),
     Regdump,
     Execute,
     Run(u16),
-    Debug(String),
+    Debug,
     Exit,
     NULL,
     Error
@@ -52,8 +54,8 @@ pub fn poll_input() -> Inputs {
                 println!("\nPlease specify a memory range in the format 'memdump START END'.");
                 return Inputs::Error;
             }
-            let start = input_split[1].parse::<u16>().unwrap();
-            let end = input_split[2].parse::<u16>().unwrap();
+            let start = input_split[1].parse::<u32>().unwrap();
+            let end = input_split[2].parse::<u32>().unwrap();
             Inputs::Memdump(start, end)
         },
         "regdump" => Inputs::Regdump,
@@ -66,13 +68,7 @@ pub fn poll_input() -> Inputs {
             let count = input_split[1].parse::<u16>().unwrap();
             Inputs::Run(count)
         },
-        "debug" => {
-            if input_split.len() != 2 {
-                println!("Please enter only one/a user program name!");
-                return Inputs::Error;
-            }
-            Inputs::Debug(String::from(input_split[1]))
-        },
+        "debug" => Inputs::Debug,
         _ => Inputs::Error
     };
 }
@@ -90,6 +86,7 @@ pub fn commands() {
     println!("select <program>       - selects the specified program as target");
     println!("memdump <mem1> <mem2>  - dump memory in the range specified by mem1 and mem2");
     println!("regdump                - dump all register and flag information");
+    println!("debug                  - dump all memory contents to file");
     println!("execute                - execute the currently selected program until halt");
     println!("run <n>                - runs the currently selected program for N instructions");
 }
@@ -102,8 +99,14 @@ pub fn load(_pname: String) -> Program {
 pub fn select(_pname: String) {
     println!("<select> command not implemented!");
 }
-pub fn memdump(_start: u16, _end: u16) {
-    println!("<memdump> command not implemented!");
+pub fn memdump(hw: &Sc0Hardware, _start: u32, _end: u32) {
+    let mut start = _start;
+    let mut f = std::fs::File::create("memdump.out").expect("Could not create memory dump debug file!");
+    while start <= _end {
+        writeln!(f, "ADDR [0x{:04X}] - 0x{:08X}", start, hw.get_mem_dw(start));
+        start += 1;
+    }
+    println!("\n================Finished dump================\n");
 }
 pub fn regdump() {
     println!("<regdump> command not implemented!");

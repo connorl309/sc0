@@ -102,7 +102,15 @@ impl Sc0Hardware {
         // this returns a program obj
         self.user_progs.push(p);
         // want to verify for every program added
-        if check_args(&mut self.user_progs.last_mut().unwrap()) && assemble(&mut self.user_progs.last_mut().unwrap()) {
+        let mut objectVec: Vec<u32> = Vec::new();
+        if check_args(self.user_progs.last_mut().unwrap()) && assemble(self.user_progs.last_mut().unwrap(), &mut objectVec) {
+            let prog: &Program = self.user_progs.last().unwrap();
+            let mut ctr = 0;
+            objectVec.remove(0); // remove the .orig start.
+            for value in objectVec.iter() {
+                self.memory[(prog.start_pc + ctr) as usize] = *value;
+                ctr += 1;
+            }
             println!("Successfully loaded user program '{}'.", self.user_progs.last().unwrap().name.clone());
         } else {
             println!("User program '{}' failed to load -- instruction check failed!", self.user_progs.last().unwrap().name.clone());
@@ -191,7 +199,7 @@ impl Sc0Hardware {
 }
 
 // Debug functions
-pub fn __debug_memdump(hw: &Sc0Hardware) {
+pub fn __debug_memdump_all(hw: &Sc0Hardware) {
     let mut f = File::create("memdump.out").expect("Could not create memory dump debug file!");
     for (addr, val) in hw.memory.iter().enumerate() {
         writeln!(&mut f, "Address {:#06X} = {:#06X}", addr, val).unwrap();
