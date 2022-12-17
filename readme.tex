@@ -23,7 +23,7 @@
 \begin{document}
 % document info
 \title{\Huge\textbf{Simple Computer 0 Documentation}}
-\author{\href{https://github.com/connorl309/}{\textbf{\textcolor{blue}by Connor L.}}}
+\author{\href{https://github.com/connorl309/}{\textbf{by connorl309}}}
 \date{}
 \maketitle
 
@@ -114,6 +114,7 @@ either from the stack or through registers directly.
 \section{\Huge Instruction Listing and Formatting}
 \label{sec:instructionList}
 \begin{center}
+\textit{Note:} immediates have a maximum size of 16 bits, or -32,768 to 32,767.
 \begin{tabular}{|c|c|c|}
 \hline
 \textbf{Instruction} & \textbf{Format} & \textbf{Pseudocode} \\
@@ -204,15 +205,13 @@ launching the simulator and loading the file into memory.
 \begin{center}
 \begin{tabular}{|c|c|}
 \hline
-\textbf{HALT} & Special call: shuts down SC0. \\
+\textbf{HALT} & Special call: signals program end. \\
 \hline
-\textbf{PRINT} & Prints the string found at \textbf{R0} until null terminator. \\
+\textbf{PRINT} & Prints the string found at \textbf{address = R0} until null terminator. \\
 \hline
 \textbf{DISPLAY} & Displays data found in R0 on-screen. No automatic newline. \\
 \hline
-\textbf{DELAY} & Waits \textbf{R0} cycles, then resumes program execution. \\
-\hline
-\textbf{INPUT} & Reads one character from input into \textbf{R0}. \\
+\textbf{INPUT} & Reads one character from standard input into \textbf{R0}. \\
 \hline
 \end{tabular}
 \end{center}
