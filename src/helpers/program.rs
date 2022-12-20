@@ -79,6 +79,10 @@ pub fn load_prog(iname: String) -> Program {
                 pc = u32::from_str_radix(temp, 10).unwrap();
                 labelPC = pc;
             }
+            if pc < 0xFF {
+                println!("Error: program origin MUST be at or above 0xFF! Aborting...");
+                exit(-1);
+            }
             i_list.push(ExecStatement {
                 opc: Instruction::ORIG,
                 args: full_split,

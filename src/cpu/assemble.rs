@@ -11,7 +11,7 @@
  */
 
 use crate::helpers::program::Program;
-use crate::cpu::hardware::{HALT,PRINT,DISPLAY,DELAY,INPUT};
+use crate::cpu::hardware::{HALT,PRINT,DISPLAY,INPUT};
 use crate::cpu::isa::{Instruction};
 use std::path::Path;
 
@@ -459,7 +459,6 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     "halt" => outputHexLine += (HALT as u32) & 0xFFFF,
                     "print" => outputHexLine += (PRINT as u32) & 0xFFFF,
                     "display" => outputHexLine += (DISPLAY as u32) & 0xFFFF,
-                    "delay" => outputHexLine += (DELAY as u32) & 0xFFFF,
                     "input" => outputHexLine += (INPUT as u32) & 0xFFFF,
                     _ => {
                         println!("Invalid syscall! Aborting assembly.");

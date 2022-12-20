@@ -18,11 +18,20 @@ use std::io::Write;
 use std::ptr::null_mut;
 
 // List of syscall definitions
-pub const HALT: i32 = 0xAAAA;
-pub const PRINT: i32 = 0xBBBB;
-pub const DISPLAY: i32 = 0xCCCC;
-pub const DELAY: i32 = 0xDDDD;
-pub const INPUT: i32 = 0xEEEE;
+pub const HALT: u16 = 0x1F;
+pub const PRINT: u16 = 0x2F;
+pub const DISPLAY: u16 = 0x3F;
+pub const INPUT: u16 = 0x4F;
+
+// List of registers
+pub const R0: usize = 0; pub const R3: usize = 3;
+pub const R1: usize = 1; pub const R4: usize = 4;
+pub const R2: usize = 2; pub const R5: usize = 5;
+pub const R6: usize = 6; pub const R7: usize = 7;
+pub const R8: usize = 8; pub const R9: usize = 9;
+pub const R10: usize = 10; pub const R11: usize = 11;
+pub const R12: usize = 12; pub const R13_SP: usize = 13;
+pub const R14_PC: usize = 14; pub const R15_PSR: usize = 15;
 
 // "ALU", for math operations
 // add, sub, mul, div, shifts, xor, and, or, not
@@ -83,14 +92,17 @@ impl ALU {
 
 // Initialization of hardware object
 pub fn initialize(limit: u32) -> Sc0Hardware {
-    return Sc0Hardware { register_file: [0; 16], memory: vec![0; limit as usize], 
+    let mut regs = [0; 16];
+    regs[R13_SP] = limit - 1; // stack pointer; initialize to point at last memory address
+    regs[R15_PSR] = 0b010; // initial CC is only Z
+    return Sc0Hardware { register_file: regs, memory: vec![0; limit as usize], 
         alu: ALU{input1: 0, input2: 0, output: 0}, mem_limit: limit,
         user_progs: Vec::new(), selected: String::new(), // this gotta be checked !!
     }
 }
 
 pub struct Sc0Hardware {
-    pub register_file: [i32; 16], // note that [13-15] are somewhat reserved
+    pub register_file: [u32; 16], // note that [13-15] are somewhat reserved
     memory: Vec<u32>,
     alu: ALU,
     mem_limit: u32,
@@ -132,9 +144,9 @@ impl Sc0Hardware {
     }
     // Register manipulation
     pub fn get_reg(&self, idx: u8) -> i32 {
-        return self.register_file[idx as usize];
+        return self.register_file[idx as usize] as i32;
     }
-    pub fn set_reg(&mut self, idx: usize, val: i32) {
+    pub fn set_reg(&mut self, idx: usize, val: u32) {
         self.register_file[idx] = val;
     }
     // Memory reads
@@ -179,7 +191,7 @@ impl Sc0Hardware {
     }
     // ALU support
     // This updates the internal state of the ALU
-    pub fn set_alu(&mut self, arg1: i32, arg2: i32) {
+    fn set_alu(&mut self, arg1: i32, arg2: i32) {
         self.alu.input1 = arg1;
         self.alu.input2 = arg2;
     }

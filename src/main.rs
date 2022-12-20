@@ -1,5 +1,6 @@
 pub mod helpers;
 pub mod cpu;
+pub mod simulator;
 
 use crate::cpu::hardware::*;
 use crate::helpers::program::*;
