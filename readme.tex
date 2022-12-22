@@ -169,9 +169,9 @@ either from the stack or through registers directly.
 \hline
 \textbf{\scc{CMP}} & cmp src1, src2/imm & CC = (src1 - src2) \\
 \hline
-\textbf{PUSH} & push src/imm & mem[sp++] = src \\
+\textbf{PUSH} & push src/imm & mem[sp$-$$-$] = src \\
 \hline
-\textbf{\scc{POP}} & pop dest & dest = mem[$-$$-$sp] \\
+\textbf{\scc{POP}} & pop dest & dest = mem[$+$$+$sp] \\
 \hline
 \end{tabular}
 \end{center}

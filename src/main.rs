@@ -27,11 +27,8 @@ fn main() {
                     println!("Please select a loaded program first!");
                     continue;
                 }
-                execute(&sc0);
+                execute(&mut sc0);
             }
-            Inputs::Run(_count) => {
-                run(&sc0, sc0.selected.clone(), _count);
-            },
             Inputs::Debug => {
                 println!("Executing debug total-memory dump...");
                 __debug_memdump_all(&sc0);

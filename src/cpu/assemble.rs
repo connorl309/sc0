@@ -132,6 +132,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 }
                 else if src.1 == ResType::constant {
                     outputHexLine += src.0 & 0xFFFF;
+                    outputHexLine |= (1 << 24);
                     outputHexLine |= 0x1000000;
                 } else {
                     println!("Argument error on MOV! Aborting assembly.");
@@ -498,7 +499,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                 }
                 outputHexLine += src1.0 << 16;
                 if src2.1 == ResType::reg {
-                    outputHexLine += src2.0 << 12;
+                    outputHexLine += src2.0;
                 } else {
                     outputHexLine += ((src2.0 as i32) & 0xFFFF) as u32;
                     outputHexLine |= 0x100000; // bit 20 flag for imm

@@ -4,7 +4,7 @@
  * 
  */
 use std::{io::{self, Write}, process::exit};
-use crate::cpu::hardware::Sc0Hardware;
+use crate::{cpu::hardware::Sc0Hardware, simulator::simulate};
 
 use super::program::{Program, load_prog};
 
@@ -17,7 +17,6 @@ pub enum Inputs {
     Memdump(u32, u32),
     Regdump,
     Execute,
-    Run(u16),
     Debug,
     Exit,
     NULL,
@@ -65,14 +64,6 @@ pub fn poll_input() -> Inputs {
         },
         "regdump" => Inputs::Regdump,
         "execute" => Inputs::Execute,
-        "run" => {
-            if input_split.len() != 2 {
-                println!("\nPlease specify the number of instructions to run for in the format 'run NUMBER'.");
-                return Inputs::Error;
-            }
-            let count = input_split[1].parse::<u16>().unwrap();
-            Inputs::Run(count)
-        },
         "debug" => Inputs::Debug,
         _ => Inputs::Error
     };
@@ -129,27 +120,20 @@ pub fn regdump(hw: &Sc0Hardware) {
         // special formatting checks
         if reg == 13 {
             println!("R13/Stack Pointer:\t0x{:08X}", val);
+            continue;
         }
-        if reg == 14 {
+        else if reg == 14 {
             println!("R14/Program Counter:\t0x{:06X}", val);
+            continue;
         }
-        if reg == 15 { // check if 32 is right or not
-            println!("R15/Program Status Register:\t0b{:#032b}", val);
+        else if reg == 15 { // check if 32 is right or not
+            println!("R15/Program Status Register:\t{:#032b}", val);
         } else {
             println!("R{}:\t0x{:08X}", reg as u8, val);
         }
     }
 }
-pub fn execute(hw: &Sc0Hardware) {
-    let prog_ref = hw.get_prog(hw.selected.clone()).unwrap();
-    run_hidden(&prog_ref, 0xFFFF);
-}
-pub fn run(hw: &Sc0Hardware, _p: String, _count: u16) {
-    let prog_ref = hw.get_prog(hw.selected.clone()).unwrap();
-    run_hidden(&prog_ref, _count);
-}
-// this is the actual run function
-fn run_hidden(prog: &Program, limit: u16) {
-    println!("RUN is not yet implemented");
+pub fn execute(hw: &mut Sc0Hardware) {
+    simulate(hw);
 }
 // EOF

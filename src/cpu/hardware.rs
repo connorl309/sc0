@@ -181,13 +181,15 @@ impl Sc0Hardware {
         if addr >= self.mem_limit {
             panic!("Memory access of address {:#04X?} is out of bounds!", addr);
         }
-        self.memory[addr as usize] = (val as u32) & 0xFFFF;
+        self.memory[addr as usize] &= 0xFFFF0000;
+        self.memory[addr as usize] |= ((val as u16) & 0xFFFF) as u32;
     }
     pub fn set_mem_b(&mut self, addr: u32, val: u8) {
         if addr >= self.mem_limit {
             panic!("Memory access of address {:#04X?} is out of bounds!", addr);
         }
-        self.memory[addr as usize] = (val as u32) & 0xFF;
+        self.memory[addr as usize] &= 0xFFFFFF00;
+        self.memory[addr as usize] |= ((val as u8) & 0xFF) as u32;
     }
     // ALU support
     // This updates the internal state of the ALU
@@ -197,19 +199,21 @@ impl Sc0Hardware {
     }
     pub fn alu_op(&mut self, instr: Instruction, arg1: i32, arg2: i32) -> i32 {
         self.set_alu(arg1, arg2);
+        let mut ret_val: i32 = 0;
         match instr {
-            Instruction::Add => self.alu.add(),
-            Instruction::Sub => self.alu.sub(),
-            Instruction::Mul => self.alu.mul(),
-            Instruction::Div => self.alu.div(),
-            Instruction::Lshf => self.alu.lshf(),
-            Instruction::Rshf => self.alu.rshf(),
-            Instruction::Xor => self.alu.xor(),
-            Instruction::And => self.alu.and(),
-            Instruction::Or => self.alu.or(),
-            Instruction::Not => self.alu.not(),
+            Instruction::Add => ret_val = self.alu.add(),
+            Instruction::Sub => ret_val = self.alu.sub(),
+            Instruction::Mul => ret_val = self.alu.mul(),
+            Instruction::Div => ret_val = self.alu.div(),
+            Instruction::Lshf => ret_val = self.alu.lshf(),
+            Instruction::Rshf => ret_val = self.alu.rshf(),
+            Instruction::Xor => ret_val = self.alu.xor(),
+            Instruction::And => ret_val = self.alu.and(),
+            Instruction::Or => ret_val = self.alu.or(),
+            Instruction::Not => ret_val = self.alu.not(),
             _ => panic!("Error: Invalid ALU operation {:?}!", instr)
         }
+        return ret_val;
     }
 }
 
