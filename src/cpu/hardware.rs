@@ -143,8 +143,8 @@ impl Sc0Hardware {
         return None;
     }
     // Register manipulation
-    pub fn get_reg(&self, idx: u8) -> i32 {
-        return self.register_file[idx as usize] as i32;
+    pub fn get_reg(&self, idx: usize) -> i32 {
+        return self.register_file[idx] as i32;
     }
     pub fn set_reg(&mut self, idx: usize, val: u32) {
         self.register_file[idx] = val;

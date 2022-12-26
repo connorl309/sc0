@@ -129,7 +129,7 @@ pub fn regdump(hw: &Sc0Hardware) {
         else if reg == 15 { // check if 32 is right or not
             println!("R15/Program Status Register:\t{:#032b}", val);
         } else {
-            println!("R{}:\t0x{:08X}", reg as u8, val);
+            println!("R{}:\t0x{:X}", reg as u8, val);
         }
     }
 }
