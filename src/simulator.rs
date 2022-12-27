@@ -36,7 +36,7 @@ pub fn simulate(computer: &mut Sc0Hardware) {
             Instruction::Add | Instruction::Sub | Instruction::Mul | Instruction::Div | Instruction::And |
             Instruction::Or | Instruction::Xor | Instruction::Not | Instruction::Lshf | Instruction::Rshf => {
                 math(imm_flag, instr, computer, dest, possible_src1, possible_src2, constant); // CC handled inside
-            },
+            }
             Instruction::Mov => {
                 if imm_flag == 1 { // constant
                     computer.set_reg(dest as usize, constant as u32);
@@ -86,8 +86,8 @@ pub fn simulate(computer: &mut Sc0Hardware) {
                 }
             }
             Instruction::Sti => {
-                let addr = computer.get_mem_dw(computer.get_mem_dw(computer.get_reg(dest) as u32));
-                computer.set_mem_dw(addr, computer.get_reg(possible_src1) as u32);
+                let addr = computer.get_mem_dw(computer.get_reg(dest) as u32);
+                computer.set_mem_dw(addr, computer.get_reg(possible_src2) as u32);
             }
             Instruction::Stb => {
                 if imm_flag == 1 {

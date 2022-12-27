@@ -127,6 +127,7 @@ pub fn assemble(p: &mut Program, outputter: &mut Vec<u32>) -> bool {
                     
                     return false;
                 }
+                outputHexLine += dest.0 << 20;
                 if src.1 == ResType::reg {
                     outputHexLine += src.0 << 16;
                 }
