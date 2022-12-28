@@ -1,5 +1,6 @@
 #![allow(rustdoc::all)]
-use std::io::{self, Write};
+use core::slice;
+use std::{io::{self, Write}, num::Wrapping};
 
 /**
  * This file is the actual simulator for a program
@@ -159,11 +160,11 @@ pub fn simulate(computer: &mut Sc0Hardware) {
             }
             Instruction::Cmp => {
                 if (mem_entry & (1 << 20)) != 0 { // const value for #2 arg
-                    let val = (computer.get_reg(dest) as i32) - (constant as i32);
-                    set_cc(computer, val);
+                    let val = computer.get_reg(possible_src1) - (constant as u16 as u32);
+                    set_cc(computer, val as i32);
                 } else {
-                    let val = (computer.get_reg(dest) as i32) - (computer.get_reg(possible_src2) as i32);
-                    set_cc(computer, val);
+                    let val = computer.get_reg(possible_src1) - computer.get_reg(possible_src2);
+                    set_cc(computer, val as i32);
                 }
             }
             Instruction::Push => {
@@ -243,8 +244,22 @@ fn syscall_halt() -> bool {
     println!("Syscall [HALT] executed! Ending simulation of current program.");
     false
 }
-fn syscall_print(computer: &mut Sc0Hardware) { // might need to revamp this...
-    println!("DBG: Syscall [PRINT] executed! (i need to fix strings!)");
+// FIX THIS!
+fn syscall_print(computer: &mut Sc0Hardware) {
+    let bytes: &[u8] = unsafe {
+        slice::from_raw_parts(computer.memory.as_ptr() as *const u8, computer.memory.len()) // ?? this is fucked
+    };
+    let mut idx = (computer.get_reg(R0) as usize) * 4;
+    let mut stop: bool = false;
+    while !stop {
+        if bytes[idx] == 0 {
+            stop = true;
+        } else {
+            print!("{}", bytes[idx] as char);
+            idx += 1;
+        }
+    }
+    println!();
 }
 fn syscall_display(computer: &mut Sc0Hardware) {
     print!("0x{:08X}\n", computer.get_reg(R0) as u32);

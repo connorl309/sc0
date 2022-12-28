@@ -16,6 +16,7 @@ use super::isa::{Instruction, check_args};
 use std::fs::File;
 use std::io::Write;
 use std::ptr::null_mut;
+use std::num::Wrapping;
 
 // List of syscall definitions
 pub const HALT: u16 = 0x1F;
@@ -49,19 +50,19 @@ impl ALU {
         self.output = 0;
     }
     fn add(&mut self) -> u32 {
-        self.output = ((self.input1 as i32) + (self.input2 as i32)) as u32;
+        self.output = Wrapping(Wrapping(self.input1 as i32) + Wrapping(self.input2 as i32)).0.0 as u32;
         return self.output;
     }
     fn sub(&mut self) -> u32 {
-        self.output = ((self.input1 as i32) - (self.input2 as i32)) as u32;
+        self.output = Wrapping(Wrapping(self.input1 as i32) - Wrapping(self.input2 as i32)).0.0 as u32;
         return self.output;
     }
     fn mul(&mut self) -> u32 {
-        self.output = ((self.input1 as i32) * (self.input2 as i32)) as u32;
+        self.output = Wrapping(Wrapping(self.input1 as i32) * Wrapping(self.input2 as i32)).0.0 as u32;
         return self.output;
     }
     fn div(&mut self) -> u32 {
-        self.output = ((self.input1 as i32) / (self.input2 as i32)) as u32;
+        self.output = Wrapping(Wrapping(self.input1 as i32) / Wrapping(self.input2 as i32)).0.0 as u32;
         return self.output;
     }
     fn lshf(&mut self) -> u32 {
@@ -103,7 +104,7 @@ pub fn initialize(limit: u32) -> Sc0Hardware {
 
 pub struct Sc0Hardware {
     pub register_file: [u32; 16], // note that [13-15] are somewhat reserved
-    memory: Vec<u32>,
+    pub memory: Vec<u32>,
     alu: ALU,
     mem_limit: u32,
     user_progs: Vec<Program>,
@@ -133,6 +134,7 @@ impl Sc0Hardware {
             self.user_progs.pop();
         }
     }
+    
     // return program reference for given name
     pub fn get_prog(&self, n: String) -> Option<&Program> {
         for p in &self.user_progs {

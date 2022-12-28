@@ -8,6 +8,7 @@ use crate::helpers::{cli::*};
 
 #[allow(non_snake_case)]
 fn main() {
+    std::env::set_var("RUST_BACKTRACE", "1");
     println!("Welcome to the SC0. Please enter a command, or type '?' for a list of commands.");
     
     let mut sc0 = initialize(0xFFFF + 1);
