@@ -39,9 +39,9 @@ pub fn simulate(computer: &mut Sc0Hardware) {
             }
             Instruction::Mov => {
                 if imm_flag == 1 { // constant
-                    computer.set_reg(dest as usize, constant as u32);
+                    computer.set_reg(dest as usize, constant as u16 as u32);
                 } else {
-                    computer.set_reg(dest as usize, computer.get_reg(possible_src1) as u32);
+                    computer.set_reg(dest as usize, computer.get_reg(possible_src1));
                 }
             },
             Instruction::Lea => {
@@ -54,7 +54,7 @@ pub fn simulate(computer: &mut Sc0Hardware) {
             }
             Instruction::Ldb => {
                 if imm_flag == 1 { // constant offset
-                    let mut addr = computer.get_reg(possible_src1);
+                    let mut addr = computer.get_reg(possible_src1) as i32;
                     addr += constant as i32;
                     computer.set_reg(dest as usize, computer.get_mem_b(addr as u32));
                 } else { // mem load offset in register
@@ -65,7 +65,7 @@ pub fn simulate(computer: &mut Sc0Hardware) {
             }
             Instruction::Ldw => {
                 if imm_flag == 1 { // constant offset
-                    let mut addr = computer.get_reg(possible_src1);
+                    let mut addr = computer.get_reg(possible_src1) as i32;
                     addr += constant as i32;
                     computer.set_reg(dest as usize, computer.get_mem_w(addr as u32));
                 } else { // mem load offset in register
@@ -76,7 +76,7 @@ pub fn simulate(computer: &mut Sc0Hardware) {
             }
             Instruction::Ldd => {
                 if imm_flag == 1 { // constant offset
-                    let mut addr = computer.get_reg(possible_src1);
+                    let mut addr = computer.get_reg(possible_src1) as i32;
                     addr += constant as i32;
                     computer.set_reg(dest as usize, computer.get_mem_dw(addr as u32));
                 } else { // mem load offset in register
@@ -91,28 +91,28 @@ pub fn simulate(computer: &mut Sc0Hardware) {
             }
             Instruction::Stb => {
                 if imm_flag == 1 {
-                    let addr = computer.get_reg(possible_src1) + (constant as i32);
-                    computer.set_mem_b(addr as u32, computer.get_reg(dest) as u8);
+                    let addr = (computer.get_reg(dest) as i32) + (constant as i32);
+                    computer.set_mem_b(addr as u32, computer.get_reg(possible_src1) as u8);
                 } else {
-                    let addr = computer.get_reg(possible_src1) + computer.get_reg(possible_src2);
+                    let addr = computer.get_reg(dest) + computer.get_reg(possible_src2);
                     computer.set_mem_b(addr as u32, computer.get_reg(dest) as u8);
                 }
             }
             Instruction::Stw => {
                 if imm_flag == 1 {
-                    let addr = computer.get_reg(possible_src1) + (constant as i32);
-                    computer.set_mem_w(addr as u32, computer.get_reg(dest) as u16);
+                    let addr = (computer.get_reg(dest) as i32) + (constant as i32);
+                    computer.set_mem_w(addr as u32, computer.get_reg(possible_src1) as u16);
                 } else {
-                    let addr = computer.get_reg(possible_src1) + computer.get_reg(possible_src2);
+                    let addr = computer.get_reg(dest) + computer.get_reg(possible_src2);
                     computer.set_mem_w(addr as u32, computer.get_reg(dest) as u16);
                 }
             }
             Instruction::Std => {
                 if imm_flag == 1 {
-                    let addr = computer.get_reg(possible_src1) + (constant as i32);
-                    computer.set_mem_dw(addr as u32, computer.get_reg(dest) as u32);
+                    let addr = (computer.get_reg(dest) as i32) + (constant as i32);
+                    computer.set_mem_dw(addr as u32, computer.get_reg(possible_src1) as u32);
                 } else {
-                    let addr = computer.get_reg(possible_src1) + computer.get_reg(possible_src2);
+                    let addr = computer.get_reg(dest) + computer.get_reg(possible_src2);
                     computer.set_mem_dw(addr as u32, computer.get_reg(dest) as u32);
                 }
             }
@@ -153,16 +153,16 @@ pub fn simulate(computer: &mut Sc0Hardware) {
                 let spec_cc = (mem_entry & 0x70000) >> 16;
                 let curr_cc = (computer.get_reg(R15_PSR) as u32) & 0x7;
                 if (spec_cc & curr_cc) != 0 {
-                    let new_addr = computer.get_reg(R14_PC) + (constant as i32);
-                    computer.set_reg(R14_PC, new_addr as u32);
+                    let new_addr = (computer.get_reg(R14_PC) as i32) + (constant as i32);
+                    computer.set_reg(R14_PC, (new_addr - 1) as u32);
                 }
             }
             Instruction::Cmp => {
                 if (mem_entry & (1 << 20)) != 0 { // const value for #2 arg
-                    let val = computer.get_reg(dest) - (constant as i32);
+                    let val = (computer.get_reg(dest) as i32) - (constant as i32);
                     set_cc(computer, val);
                 } else {
-                    let val = computer.get_reg(dest) - computer.get_reg(possible_src2);
+                    let val = (computer.get_reg(dest) as i32) - (computer.get_reg(possible_src2) as i32);
                     set_cc(computer, val);
                 }
             }
@@ -182,7 +182,7 @@ pub fn simulate(computer: &mut Sc0Hardware) {
                 computer.set_reg(possible_src2 as usize, computer.get_mem_dw(
                     computer.get_reg(R13_SP) as u32
                 ));
-                set_cc(computer, computer.get_reg(possible_src2));
+                set_cc(computer, computer.get_reg(possible_src2) as i32);
             }
             Instruction::END | Instruction::Error | Instruction::ORIG | Instruction::FILL | Instruction::STRING => {
                 println!("Read an invalid opcode {:?}. Please check program or assembler/simulator code.", get_opcode(mem_entry));
@@ -211,16 +211,16 @@ fn set_cc(computer: &mut Sc0Hardware, val: i32) {
     computer.set_reg(R15_PSR, current_CC as u32);
 }
 fn math(imm_flag: u32, instr: Instruction, computer: &mut Sc0Hardware, dest: usize, possible_src1: usize, possible_src2: usize, constant: i16) {
-    let val;
+    let val: u32;
     if imm_flag == 1 {
-        val = computer.alu_op(instr, computer.get_reg(possible_src1 as usize), constant as i32);
-        computer.set_reg(dest as usize, val as u32);
+        val = computer.alu_op(instr, computer.get_reg(possible_src1 as usize), constant as u32);
+        computer.set_reg(dest as usize, val);
     } else {
         val = computer.alu_op(instr, computer.get_reg(possible_src1 as usize), computer.get_reg(possible_src2 as usize));
-        computer.set_reg(dest as usize, val as u32);
+        computer.set_reg(dest as usize, val);
     }
     //println!("[DBG] set register {} to {}", dest, val);
-    set_cc(computer, val);
+    set_cc(computer, val as i32);
 }
 
 // Extract opcode from a memory entry
@@ -247,7 +247,7 @@ fn syscall_print(computer: &mut Sc0Hardware) { // might need to revamp this...
     println!("DBG: Syscall [PRINT] executed! (i need to fix strings!)");
 }
 fn syscall_display(computer: &mut Sc0Hardware) {
-    print!("{}", char::from_u32(computer.get_reg(R0) as u32).expect("R0 is not an ascii character!"));
+    print!("0x{:08X}\n", computer.get_reg(R0) as u32);
 }
 fn syscall_input(computer: &mut Sc0Hardware) {
     print!("> ");

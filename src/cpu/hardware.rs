@@ -38,9 +38,9 @@ pub const R14_PC: usize = 14; pub const R15_PSR: usize = 15;
 // I probably dont need an impl for this,
 // but i want to get practice with it.
 struct ALU {
-    input1: i32,
-    input2: i32,
-    output: i32
+    input1: u32,
+    input2: u32,
+    output: u32
 }
 impl ALU {
     fn flush(&mut self) {
@@ -48,43 +48,43 @@ impl ALU {
         self.input1 = 0;
         self.output = 0;
     }
-    fn add(&mut self) -> i32 {
-        self.output = self.input1 + self.input2;
+    fn add(&mut self) -> u32 {
+        self.output = ((self.input1 as i32) + (self.input2 as i32)) as u32;
         return self.output;
     }
-    fn sub(&mut self) -> i32 {
-        self.output = self.input1 - self.input2;
+    fn sub(&mut self) -> u32 {
+        self.output = ((self.input1 as i32) - (self.input2 as i32)) as u32;
         return self.output;
     }
-    fn mul(&mut self) -> i32 {
-        self.output = self.input1 * self.input2;
+    fn mul(&mut self) -> u32 {
+        self.output = ((self.input1 as i32) * (self.input2 as i32)) as u32;
         return self.output;
     }
-    fn div(&mut self) -> i32 {
-        self.output = self.input1 / self.input2;
+    fn div(&mut self) -> u32 {
+        self.output = ((self.input1 as i32) / (self.input2 as i32)) as u32;
         return self.output;
     }
-    fn lshf(&mut self) -> i32 {
+    fn lshf(&mut self) -> u32 {
         self.output = self.input1 << self.input2;
         return self.output;
     }
-    fn rshf(&mut self) -> i32 {
+    fn rshf(&mut self) -> u32 {
         self.output = self.input1 >> self.input2;
         return self.output;
     }
-    fn xor(&mut self) -> i32 {
+    fn xor(&mut self) -> u32 {
         self.output = self.input1 ^ self.input2;
         return self.output;
     }
-    fn and(&mut self) -> i32 {
+    fn and(&mut self) -> u32 {
         self.output = self.input1 & self.input2;
         return self.output;
     }
-    fn or(&mut self) -> i32 {
+    fn or(&mut self) -> u32 {
         self.output = self.input1 | self.input2;
         return self.output;
     }
-    fn not(&mut self) -> i32 {
+    fn not(&mut self) -> u32 {
         self.output = !self.input1; // rust uses ! for bitwise not. funny.
         return self.output;
     }
@@ -143,8 +143,8 @@ impl Sc0Hardware {
         return None;
     }
     // Register manipulation
-    pub fn get_reg(&self, idx: usize) -> i32 {
-        return self.register_file[idx] as i32;
+    pub fn get_reg(&self, idx: usize) -> u32 {
+        return self.register_file[idx];
     }
     pub fn set_reg(&mut self, idx: usize, val: u32) {
         self.register_file[idx] = val;
@@ -193,13 +193,13 @@ impl Sc0Hardware {
     }
     // ALU support
     // This updates the internal state of the ALU
-    fn set_alu(&mut self, arg1: i32, arg2: i32) {
+    fn set_alu(&mut self, arg1: u32, arg2: u32) {
         self.alu.input1 = arg1;
         self.alu.input2 = arg2;
     }
-    pub fn alu_op(&mut self, instr: Instruction, arg1: i32, arg2: i32) -> i32 {
+    pub fn alu_op(&mut self, instr: Instruction, arg1: u32, arg2: u32) -> u32 {
         self.set_alu(arg1, arg2);
-        let mut ret_val: i32 = 0;
+        let mut ret_val: u32 = 0;
         match instr {
             Instruction::Add => ret_val = self.alu.add(),
             Instruction::Sub => ret_val = self.alu.sub(),
